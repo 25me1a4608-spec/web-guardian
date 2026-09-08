@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebGuard AI — Security & Browser Protection</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="app" id="app">
+
+    <!-- ── Header ─────────────────────────────────────────────────────── -->
+    <header class="header">
+      <div class="header-logo">
+        <div class="logo-shield">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+        <div class="logo-text">
+          <span class="logo-name">WebGuard AI</span>
+          <span class="logo-tag">Browser Protection</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="nav-icon-btn" id="toggleHistoryBtn" title="Protection Log" aria-label="Protection Log">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+          </svg>
+        </button>
+        <button class="nav-icon-btn" id="toggleSettingsBtn" title="Settings" aria-label="Extension Settings">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </button>
+        <div class="header-status" id="backendStatus" title="Backend Status">
+          <span class="status-dot" id="statusDot"></span>
+          <span class="status-label" id="statusLabel">...</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- ── Current Page Info Bar ───────────────────────────────────────── -->
+    <section class="url-bar" id="urlBar">
+      <div class="url-bar-header">
+        <div class="url-bar-label">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          </svg>
+          CURRENT TAB
+        </div>
+        <button class="url-toggle-btn hidden" id="urlExpandBtn" type="button">Show full URL</button>
+      </div>
+      <div class="domain-display" id="domainDisplay">Checking active tab...</div>
+      <div class="url-display hidden" id="currentUrlDisplay"></div>
+    </section>
+
+    <!-- ── Restricted Browser Page Warning ────────────────────────────── -->
+    <div class="restricted-warning hidden" id="restrictedWarning">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <span>This browser page cannot be analyzed. Use manual entry below to inspect any link.</span>
+    </div>
+
+    <!-- ── IDLE State ─────────────────────────────────────────────────── -->
+    <section class="idle-state" id="idleState">
+      <div class="idle-icon">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+      </div>
+      <p class="idle-title" id="idleTitle">Ready to analyze this page.</p>
+      <p class="idle-sub" id="idleSub">WebGuard AI will inspect the active page URL for phishing indicators, look-alike domains, and security threats.</p>
+
+      <button class="btn-primary" id="analyzeCurrentBtn" type="button">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        Analyze Current Page
+      </button>
+
+      <button class="btn-secondary" id="pasteUrlBtn" type="button">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+          <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+        </svg>
+        Analyze Another URL
+      </button>
+
+      <!-- Protection Status Pill -->
+      <div class="protection-indicator-pill" id="protectionPill">
+        <span class="prot-dot" id="protDot"></span>
+        <span class="prot-text" id="protText">Browser Protection: OFF</span>
+      </div>
+    </section>
+
+    <!-- ── MANUAL URL Input State ─────────────────────────────────────── -->
+    <section class="manual-input-state hidden" id="manualInputState">
+      <div class="input-label">Paste or enter a URL to inspect:</div>
+      <div class="input-row">
+        <input
+          type="text"
+          id="manualUrlInput"
+          class="url-input"
+          placeholder="https://example.com/verify-account"
+          autocomplete="off"
+          spellcheck="false"
+        />
+      </div>
+      <div class="manual-error hidden" id="manualInputError"></div>
+      <div class="input-actions">
+        <button class="btn-primary" id="analyzeManualBtn" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          Analyze URL
+        </button>
+        <button class="btn-ghost" id="cancelManualBtn" type="button">Cancel</button>
+      </div>
+    </section>
+
+    <!-- ── ANALYZING / Progress State ─────────────────────────────────── -->
+    <section class="scanning-state hidden" id="scanningState">
+      <div class="radar-wrap">
+        <div class="radar-ring r1"></div>
+        <div class="radar-ring r2"></div>
+        <div class="radar-center">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+      </div>
+      <p class="scanning-text" id="scanningText">Analyzing URL...</p>
+      <div class="scanning-steps" id="scanningSteps">
+        <div class="step" id="step1">
+          <div class="step-dot active"></div>
+          <span>Analyzing URL...</span>
+        </div>
+        <div class="step" id="step2">
+          <div class="step-dot"></div>
+          <span>Checking security indicators...</span>
+        </div>
+        <div class="step" id="step3">
+          <div class="step-dot"></div>
+          <span>Calculating risk...</span>
+        </div>
+        <div class="step" id="step4">
+          <div class="step-dot"></div>
+          <span>Generating explanation...</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── RESULT / WARNING State (Step 7) ────────────────────────────── -->
+    <section class="result-state hidden" id="resultState">
+
+      <!-- ── Dynamic Warning Hero Card ── -->
+      <div class="warning-hero-card" id="warningHeroCard">
+        <div class="warning-icon-box" id="warningIconBox"></div>
+        <div class="warning-hero-text">
+          <div class="warning-hero-badge" id="warningHeroBadge">LOW RISK</div>
+          <div class="warning-hero-score-row">
+            <span class="warning-score-label">RISK SCORE:</span>
+            <span class="warning-score-val" id="warningScoreVal">0 / 100</span>
+          </div>
+          <p class="warning-hero-message" id="warningHeroMsg"></p>
+        </div>
+      </div>
+
+      <!-- Action buttons for Warnings (Go Back & View Details) -->
+      <div class="warning-actions-bar" id="warningActionsBar">
+        <button class="btn-safety-back" id="warningGoBackBtn" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+          Go Back (Safe Exit)
+        </button>
+        <button class="btn-secondary sm" id="warningToggleDetailsBtn" type="button">
+          View Details ▾
+        </button>
+      </div>
+
+      <!-- Scrollable content area (Collapsible on warning states) -->
+      <div class="result-scroll" id="resultDetailsArea">
+
+        <!-- Target Analyzed URL with expand toggle -->
+        <div class="result-url-card">
+          <div class="result-url-header">
+            <span class="result-url-label">Analyzed URL:</span>
+            <button class="expand-link" id="resultUrlToggle" type="button">Full URL</button>
+          </div>
+          <div class="result-url-value" id="resultUrl"></div>
+        </div>
+
+        <!-- Why this score? -->
+        <div class="result-card">
+          <div class="card-header">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            Why this URL was flagged
+          </div>
+          <p class="card-body" id="explanationText"></p>
+        </div>
+
+        <!-- Security Indicators -->
+        <div class="result-card">
+          <div class="card-header">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            Detected Indicators
+            <span class="count-badge" id="indicatorCount">0</span>
+          </div>
+          <div class="indicators-list" id="indicatorsList"></div>
+        </div>
+
+        <!-- Threat Intelligence -->
+        <div class="result-card">
+          <div class="card-header">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+              <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+              <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+            </svg>
+            Threat Intelligence
+          </div>
+          <div class="ti-badge" id="tiBadge"></div>
+        </div>
+
+        <!-- AI Risk Analysis -->
+        <div class="result-card" id="mlCard">
+          <div class="card-header">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+            </svg>
+            AI Risk Analysis
+          </div>
+          <div class="ml-row" id="mlRow"></div>
+        </div>
+
+        <!-- Recommendation -->
+        <div class="result-card recommend-card" id="recommendCard">
+          <div class="card-header">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            Recommendation
+          </div>
+          <p class="card-body" id="recommendText"></p>
+        </div>
+
+        <!-- Privacy note -->
+        <p class="privacy-note">
+          WebGuard analyzes the URL you choose to check. It does not need your passwords, payment information, or page form data.
+        </p>
+      </div>
+
+      <!-- Secondary result actions -->
+      <div class="result-actions">
+        <button class="btn-secondary sm" id="scanAnotherBtn" type="button">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.82"/>
+          </svg>
+          Scan Again
+        </button>
+        <button class="btn-secondary sm" id="openWebappBtn" type="button">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+            <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+          </svg>
+          View Full Report
+        </button>
+      </div>
+    </section>
+
+    <!-- ── ERROR State ────────────────────────────────────────────────── -->
+    <section class="error-state hidden" id="errorState">
+      <div class="error-icon">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+      </div>
+      <p class="error-title" id="errorTitle">Analysis Error</p>
+      <p class="error-msg" id="errorMsg"></p>
+      <div class="error-actions">
+        <button class="btn-primary" id="retryBtn" type="button">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.82"/>
+          </svg>
+          Try Again
+        </button>
+        <button class="btn-ghost" id="errorBackBtn" type="button">Back</button>
+      </div>
+    </section>
+
+    <!-- ── SETTINGS Screen (Step 7) ───────────────────────────────────── -->
+    <section class="settings-state hidden" id="settingsState">
+      <div class="settings-header">
+        <span class="settings-title">Extension Settings</span>
+        <button class="btn-ghost sm" id="closeSettingsBtn" type="button">✕</button>
+      </div>
+
+      <div class="settings-content">
+        <!-- Browser Protection Toggle -->
+        <div class="settings-row">
+          <div class="settings-row-text">
+            <div class="settings-label">Browser Protection</div>
+            <div class="settings-desc">Inspect visited URLs in real-time and alert on high-risk links.</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="browserProtectionToggle" />
+            <span class="slider round"></span>
+          </label>
+        </div>
+
+        <!-- Backend Connection -->
+        <div class="settings-row">
+          <div class="settings-row-text">
+            <div class="settings-label">Backend Connection</div>
+            <div class="settings-desc" id="settingsBackendDesc">http://localhost:5001</div>
+          </div>
+          <div class="settings-row-action">
+            <span class="status-pill-small" id="settingsBackendStatus">Checking...</span>
+            <button class="btn-ghost sm" id="testBackendBtn" type="button">Test</button>
+          </div>
+        </div>
+
+        <!-- Analysis Mode -->
+        <div class="settings-row">
+          <div class="settings-row-text">
+            <div class="settings-label">Analysis Pipeline</div>
+            <div class="settings-desc">Local Heuristic Engine + Threat Intel + ML Feature Model</div>
+          </div>
+          <span class="mode-tag-pill">Hybrid 18-Feature</span>
+        </div>
+
+        <!-- Protection Log Management -->
+        <div class="settings-row">
+          <div class="settings-row-text">
+            <div class="settings-label">Protection Log</div>
+            <div class="settings-desc" id="settingsLogCount">0 scans recorded locally</div>
+          </div>
+          <button class="btn-secondary sm danger" id="settingsClearLogBtn" type="button">
+            Clear Log
+          </button>
+        </div>
+
+        <!-- Privacy Explanation Notice -->
+        <div class="settings-privacy-card">
+          <div class="privacy-card-title">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            Privacy Guarantee
+          </div>
+          <p class="privacy-card-body">
+            "WebGuard analyzes the URL you choose to check. It does not need your passwords, payment information, or page form data."
+          </p>
+        </div>
+
+        <!-- About Area -->
+        <div class="settings-about">
+          <div class="about-app-name">WebGuard AI</div>
+          <div class="about-version">Version 1.0.0 (Step 7 — Browser Protection)</div>
+          <div class="about-motto">"Don't just detect the threat. Understand it."</div>
+        </div>
+      </div>
+
+      <div class="settings-footer">
+        <button class="btn-secondary" id="backToScannerBtn" type="button">← Back to Scanner</button>
+      </div>
+    </section>
+
+    <!-- ── RECENT SCANS / PROTECTION LOG Drawer ────────────────────────── -->
+    <section class="history-drawer hidden" id="historyDrawer">
+      <div class="drawer-header">
+        <span class="drawer-title">Protection Log</span>
+        <button class="btn-ghost sm" id="closeHistoryBtn" type="button">✕</button>
+      </div>
+      <div class="history-list" id="historyList"></div>
+      <div class="drawer-footer">
+        <button class="btn-secondary sm danger" id="clearHistoryBtn" type="button">Clear Protection Log</button>
+      </div>
+    </section>
+
+  </div><!-- /.app -->
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>
