@@ -1,14 +1,9 @@
-/**
- * WebGuard AI — Hardened Express Backend Server
- * backend/server.js
- *
- * Step 9: Security Hardening, Validation, Error Handling & Production Readiness
- */
 
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import analyzeRoutes from './routes/analyzeRoutes.js';
+import visualVerifyRoutes from './routes/visualVerifyRoutes.js';
 import { rateLimiter } from './middleware/rateLimiter.js';
 import { safeLogger } from './middleware/safeLogger.js';
 
@@ -73,7 +68,11 @@ app.use(cors({
   credentials: false
 }));
 
-// ── 3. Strict Payload Size Limit (10KB) ─────────────────────────────────────
+// ── 3. Route-Specific & Strict Payload Size Limits ──────────────────────────
+// Dedicated 10MB parser for visual screenshot verification from Chrome Extension
+app.use('/api/visual-verify', express.json({ limit: '10mb' }));
+
+// Strict 10KB parser for standard URL analysis routes
 app.use(express.json({ limit: '10kb' }));
 
 // ── 4. JSON Syntax & Payload Error Handler ──────────────────────────────────
@@ -101,6 +100,7 @@ app.use('/api', rateLimiter);
 
 // ── 7. API Routes ───────────────────────────────────────────────────────────
 app.use('/api', analyzeRoutes);
+app.use('/api', visualVerifyRoutes);
 
 // ── 8. Root Informational Route ─────────────────────────────────────────────
 app.get('/', (req, res) => {
@@ -112,7 +112,9 @@ app.get('/', (req, res) => {
     mode: IS_PRODUCTION ? 'production' : 'development',
     endpoints: {
       health: 'GET /api/health',
-      analyze: 'POST /api/analyze'
+      analyze: 'POST /api/analyze',
+      visualVerify: 'POST /api/visual-verify',
+      supportedBrands: 'GET /api/visual-verify/brands'
     }
   });
 });

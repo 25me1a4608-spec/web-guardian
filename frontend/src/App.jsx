@@ -1,37 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
+import HomePage from './components/HomePage';
 import UrlScanner from './components/UrlScanner';
 import ScanningProgress from './components/ScanningProgress';
 import AnalysisResult from './components/AnalysisResult';
-import Dashboard from './components/Dashboard';
-import ScanHistory from './components/ScanHistory';
-import HowItWorks from './components/HowItWorks';
-import SecurityAwareness from './components/SecurityAwareness';
+import CyberAcademyPage from './components/CyberAcademyPage';
+import ThreatIntelligencePage from './components/ThreatIntelligencePage';
+import ResourcesPage from './components/ResourcesPage';
 import ExtensionGuide from './components/ExtensionGuide';
+import SupportPage from './components/SupportPage';
 import PrivacySecurityModal from './components/PrivacySecurityModal';
 import Footer from './components/Footer';
 
 import { analyzeUrl, checkBackendHealth } from './services/api';
-import { getScanHistory, saveScanToHistory, clearScanHistory, loadDemoScanData, resetDemoScans } from './utils/storage';
+import { getScanHistory, saveScanToHistory, clearScanHistory, resetDemoScans } from './utils/storage';
 import { AlertTriangle, X } from 'lucide-react';
 import './App.css';
 
-// 7 stages matching the Step 11 pipeline spec (Requirement 9)
-const SCAN_STAGES = [
-  'Validating URL',
-  'Extracting URL features',
-  'Checking security indicators',
-  'Threat intelligence',
-  'Risk prediction',
-  'Calculating final score',
-  'Generating explanation'
-];
-
-// Staggered timing (ms from start) — snappy for live hackathon presentation
-const STAGE_DELAYS = [0, 220, 480, 750, 1050, 1350, 1650];
-
 export default function App() {
-  const [activeTab,          setActiveTab]          = useState('scanner');
+  const [activeTab,          setActiveTab]          = useState('home');
   const [isScanning,         setIsScanning]         = useState(false);
   const [scanStage,          setScanStage]          = useState(0);
   const [targetUrl,          setTargetUrl]          = useState('');
@@ -44,7 +31,9 @@ export default function App() {
   const [isDemoMode,         setIsDemoMode]         = useState(false);
   const [activeScenarioId,   setActiveScenarioId]   = useState(null);
 
-  // Load history + check backend on mount + check query param
+  // Staggered timing for scanning animation
+  const STAGE_DELAYS = [0, 220, 480, 750, 1050, 1350, 1650];
+
   useEffect(() => {
     setHistory(getScanHistory());
 
@@ -53,7 +42,6 @@ export default function App() {
       setTiConfigured(!!ti);
     });
 
-    // Check for ?url= query parameter (e.g. from Chrome extension "Full Report" click)
     try {
       const params = new URLSearchParams(window.location.search);
       const queryUrl = params.get('url');
@@ -64,7 +52,6 @@ export default function App() {
       // Ignore query param error
     }
 
-    // Heartbeat every 15 s
     const interval = setInterval(() => {
       checkBackendHealth().then(({ online, tiConfigured: ti }) => {
         setIsBackendOnline(online);
@@ -84,9 +71,8 @@ export default function App() {
     setScanStage(0);
     setCurrentResult(null);
     setScanError('');
-    setActiveTab('scanner');
+    setActiveTab('analysis');
 
-    // Schedule stage transitions
     const timers = STAGE_DELAYS.slice(1).map((delay, idx) =>
       setTimeout(() => setScanStage(idx + 1), delay)
     );
@@ -94,7 +80,6 @@ export default function App() {
     try {
       const [apiResult] = await Promise.all([
         analyzeUrl(urlToScan),
-        // Snappy transition for live presentations (~1.8s)
         new Promise(resolve => setTimeout(resolve, 1800))
       ]);
 
@@ -135,7 +120,7 @@ export default function App() {
     const cleaned = resetDemoScans();
     setHistory(cleaned);
     setScanError('');
-    setActiveTab('scanner');
+    setActiveTab('analysis');
   };
 
   const handleToggleDemoMode = () => {
@@ -145,28 +130,17 @@ export default function App() {
   const handleScanAnother = () => {
     setCurrentResult(null);
     setScanError('');
-    setActiveTab('scanner');
+    setActiveTab('analysis');
   };
 
   const handleSelectHistoryItem = (savedResult) => {
     setCurrentResult(savedResult);
     setScanError('');
-    setActiveTab('scanner');
-  };
-
-  const handleClearHistory = () => {
-    setHistory(clearScanHistory());
-  };
-
-  const handleLoadDemoData = () => {
-    setHistory(loadDemoScanData());
+    setActiveTab('analysis');
   };
 
   return (
     <div className="app-layout">
-      <div className="ambient-blob cyan"   aria-hidden="true" />
-      <div className="ambient-blob purple" aria-hidden="true" />
-
       <Header
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -174,20 +148,20 @@ export default function App() {
         isDemoMode={isDemoMode}
       />
 
-      <main className="main-viewport">
-        {/* Global User-Friendly Error Banner */}
+      <main className="main-viewport" id="main-content">
+        {/* Global Error Banner */}
         {scanError && (
-          <div className="scan-error-toast" role="alert">
-            <div className="toast-icon-wrap">
+          <div className="wg-error-toast" role="alert">
+            <div className="wg-error-toast-icon">
               <AlertTriangle size={18} />
             </div>
-            <div className="toast-content">
+            <div className="wg-error-toast-content">
               <strong>Validation / Analysis Notice</strong>
               <p>{scanError}</p>
             </div>
             <button
               type="button"
-              className="toast-close-btn"
+              className="wg-error-toast-close"
               onClick={() => setScanError('')}
               aria-label="Dismiss error"
             >
@@ -196,7 +170,17 @@ export default function App() {
           </div>
         )}
 
-        {activeTab === 'scanner' && (
+        {/* HOME PAGE */}
+        {activeTab === 'home' && (
+          <HomePage
+            onStartAnalysis={handleStartAnalysis}
+            setActiveTab={setActiveTab}
+            onRunDemo={handleRunDemo}
+          />
+        )}
+
+        {/* THREAT ANALYSIS PAGE */}
+        {activeTab === 'analysis' && (
           <>
             {isScanning ? (
               <ScanningProgress
@@ -226,42 +210,32 @@ export default function App() {
           </>
         )}
 
-        {activeTab === 'dashboard' && (
-          <Dashboard
-            history={history}
-            onScanNewUrl={handleScanAnother}
-            setActiveTab={setActiveTab}
-            onSelectHistoryItem={handleSelectHistoryItem}
-            onLoadDemoData={handleLoadDemoData}
-            onResetDemo={handleResetDemo}
-          />
+        {/* CYBER ACADEMY PAGE */}
+        {activeTab === 'academy' && (
+          <CyberAcademyPage setActiveTab={setActiveTab} />
         )}
 
-        {activeTab === 'history' && (
-          <ScanHistory
-            history={history}
-            onScanAgain={handleStartAnalysis}
-            onClearHistory={handleClearHistory}
-            onSelectHistoryItem={handleSelectHistoryItem}
-            setActiveTab={setActiveTab}
-            onLoadDemoData={handleLoadDemoData}
-            onResetDemo={handleResetDemo}
-          />
+        {/* THREAT INTELLIGENCE PAGE */}
+        {activeTab === 'intelligence' && (
+          <ThreatIntelligencePage setActiveTab={setActiveTab} />
         )}
 
-        {activeTab === 'how-it-works' && (
-          <HowItWorks setActiveTab={setActiveTab} />
+        {/* RESOURCES PAGE */}
+        {activeTab === 'resources' && (
+          <ResourcesPage setActiveTab={setActiveTab} />
         )}
 
-        {activeTab === 'awareness' && (
-          <SecurityAwareness setActiveTab={setActiveTab} />
-        )}
-
+        {/* CHROME SHIELD EXTENSION PAGE */}
         {activeTab === 'extension' && (
           <ExtensionGuide
             isBackendOnline={isBackendOnline}
             onScanUrl={handleStartAnalysis}
           />
+        )}
+
+        {/* SUPPORT PAGE */}
+        {activeTab === 'support' && (
+          <SupportPage setActiveTab={setActiveTab} />
         )}
       </main>
 

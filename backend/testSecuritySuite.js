@@ -1,9 +1,3 @@
-/**
- * WebGuard AI — Automated Security Verification Test Suite
- * backend/testSecuritySuite.js
- *
- * Step 9: Comprehensive Security & Validation Audit
- */
 
 import http from 'http';
 
@@ -38,7 +32,7 @@ function makeRequest(method, path, body = null, customHeaders = {}) {
           let json = null;
           try {
             json = JSON.parse(responseData);
-          } catch (_) {}
+          } catch (_) { }
           resolve({
             status: res.statusCode,
             headers: res.headers,

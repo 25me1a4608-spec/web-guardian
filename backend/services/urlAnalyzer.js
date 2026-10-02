@@ -36,6 +36,26 @@ const SHORTENERS = new Set([
   'trib.al', 'qr.ae', 't.ly', 'short.io'
 ]);
 
+// ─── Known free tunnel / temporary-hosting services abused for phishing ──────
+// These platforms provide free subdomains with no vetting — commonly used to
+// host phishing pages that look legitimate (HTTPS, real domain, no typos).
+const FREE_TUNNEL_HOSTS = new Set([
+  'trycloudflare.com',  // Cloudflare Quick Tunnels (free, unauthenticated)
+  'ngrok.io',           // ngrok tunnels
+  'ngrok-free.app',     // ngrok free tier
+  'loca.lt',            // localtunnel
+  'serveo.net',         // serveo
+  'pagekite.me',        // pagekite
+  'localxpose.io',      // localxpose
+  'localhost.run',      // localhost.run
+  'glitch.me',          // Glitch app hosting
+  'repl.co',            // Replit legacy
+  'replit.dev',         // Replit dev
+  'workers.dev',        // Cloudflare Workers free tier
+  'pages.dev',          // Cloudflare Pages free tier
+  'surge.sh',           // surge.sh
+]);
+
 // ─── Ports that are non-standard for web traffic ─────────────────────────────
 const SUSPICIOUS_PORTS = new Set([
   21, 22, 23, 25, 110, 143, 161, 389, 445, 1080, 3306, 3389,
@@ -159,6 +179,17 @@ export function extractFeatures(rawUrl, parsed) {
   }
   const unusualUrlStructure = sensitiveSegmentCount >= 2 || (pathSegments.length >= 2 && /(login|signin|auth|recover)/i.test(pathname) && /(verify|account|confirm|update|secure|password)/i.test(pathname));
 
+  // ── 17. Free Tunnel / Temporary Hosting Abuse ──────────────────────────────
+  // Checks if the hostname ends with any known free-tunnel/hosting apex domain.
+  // e.g. "disco-notification-maria-driven.trycloudflare.com" → freeTunnelHost = 'trycloudflare.com'
+  let freeTunnelHost = null;
+  for (const tunnelApex of FREE_TUNNEL_HOSTS) {
+    if (hostname === tunnelApex || hostname.endsWith('.' + tunnelApex)) {
+      freeTunnelHost = tunnelApex;
+      break;
+    }
+  }
+
   return {
     // Core fields per spec
     isHttps,
@@ -184,6 +215,7 @@ export function extractFeatures(rawUrl, parsed) {
     isHighRiskTld,
     hasDoubleSlashPath,
     brandImpersonation,  // string | null
-    unusualUrlStructure
+    unusualUrlStructure,
+    freeTunnelHost        // string | null — e.g. 'trycloudflare.com'
   };
 }

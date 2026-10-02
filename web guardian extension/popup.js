@@ -78,6 +78,32 @@ const recommendText          = document.getElementById('recommendText');
 const scanAnotherBtn         = document.getElementById('scanAnotherBtn');
 const openWebappBtn          = document.getElementById('openWebappBtn');
 
+// Visual Verification & Puppeteer DOM
+const visualVerifyCard       = document.getElementById('visualVerifyCard');
+const visualVerdictBadge     = document.getElementById('visualVerdictBadge');
+const visualCloneBanner      = document.getElementById('visualCloneBanner');
+const visualBannerTitle      = document.getElementById('visualBannerTitle');
+const visualBannerDesc       = document.getElementById('visualBannerDesc');
+const suspectScreenshotBox   = document.getElementById('suspectScreenshotBox');
+const suspectScreenshotImg   = document.getElementById('suspectScreenshotImg');
+const suspectPlaceholder     = document.getElementById('suspectPlaceholder');
+const originalScreenshotBox  = document.getElementById('originalScreenshotBox');
+const originalScreenshotImg  = document.getElementById('originalScreenshotImg');
+const originalPlaceholder    = document.getElementById('originalPlaceholder');
+const originalColTitle       = document.getElementById('originalColTitle');
+const similarityVal          = document.getElementById('similarityVal');
+const similarityFill         = document.getElementById('similarityFill');
+const officialLinkRow        = document.getElementById('officialLinkRow');
+const officialLinkUrl        = document.getElementById('officialLinkUrl');
+const visualDiscrepanciesList= document.getElementById('visualDiscrepanciesList');
+
+// Lightbox Modal DOM
+const lightboxModal          = document.getElementById('lightboxModal');
+const lightboxBackdrop       = document.getElementById('lightboxBackdrop');
+const lightboxTitle          = document.getElementById('lightboxTitle');
+const lightboxImg            = document.getElementById('lightboxImg');
+const closeLightboxBtn       = document.getElementById('closeLightboxBtn');
+
 // Error DOM
 const errorState             = document.getElementById('errorState');
 const errorTitle             = document.getElementById('errorTitle');
@@ -110,6 +136,8 @@ let isResultUrlExpanded      = false;
 let areDetailsVisible        = false;
 let stepInterval             = null;
 let currentRiskLevel         = 'LOW RISK';
+let currentClientScreenshot  = null;
+let currentVisualReport      = null;
 
 // ─── Lifecycle Initialization ────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
@@ -443,6 +471,40 @@ function setupEventListeners() {
       if (settingsLogCount) settingsLogCount.textContent = '0 scans recorded locally';
     });
   }
+
+  // Lightbox Modal Interactions
+  if (suspectScreenshotBox) {
+    suspectScreenshotBox.addEventListener('click', () => {
+      const src = suspectScreenshotImg?.getAttribute('src');
+      if (src) openLightbox('Active Tab (Captured Screenshot)', src);
+    });
+  }
+
+  if (originalScreenshotBox) {
+    originalScreenshotBox.addEventListener('click', () => {
+      const src = originalScreenshotImg?.getAttribute('src');
+      if (src) openLightbox(originalColTitle?.textContent || 'Original Authentic Site (Puppeteer)', src);
+    });
+  }
+
+  if (closeLightboxBtn) {
+    closeLightboxBtn.addEventListener('click', closeLightbox);
+  }
+
+  if (lightboxBackdrop) {
+    lightboxBackdrop.addEventListener('click', closeLightbox);
+  }
+}
+
+function openLightbox(title, imgSrc) {
+  if (!lightboxModal) return;
+  if (lightboxTitle) lightboxTitle.textContent = title;
+  if (lightboxImg) lightboxImg.src = imgSrc;
+  lightboxModal.classList.remove('hidden');
+}
+
+function closeLightbox() {
+  if (lightboxModal) lightboxModal.classList.add('hidden');
 }
 
 function showManualError(msg) {
@@ -455,13 +517,32 @@ function showManualError(msg) {
 // ─── Analysis Pipeline: Popup -> Background -> Backend ───────────────────────
 function triggerAnalysis(url) {
   activeAnalyzedUrl = url;
+  currentClientScreenshot = null;
+  currentVisualReport = null;
   showView(scanningState);
 
+  // 1. If inspecting active tab, capture screenshot right away
+  if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.captureVisibleTab) {
+    try {
+      chrome.tabs.captureVisibleTab(null, { format: 'jpeg', quality: 60 }, (dataUrl) => {
+        if (!chrome.runtime.lastError && dataUrl) {
+          currentClientScreenshot = dataUrl;
+        }
+        triggerVisualVerification(url, currentClientScreenshot);
+      });
+    } catch (_) {
+      triggerVisualVerification(url, null);
+    }
+  } else {
+    triggerVisualVerification(url, null);
+  }
+
+  // 2. Multi-stage progress indicators
   const stageLabels = [
     'Analyzing URL...',
     'Checking security indicators...',
-    'Calculating risk...',
-    'Generating explanation...'
+    'Rendering original site via Puppeteer...',
+    'Generating visual comparison & explanation...'
   ];
 
   let currentStep = 0;
@@ -494,6 +575,168 @@ function triggerAnalysis(url) {
     directFetchAnalyze(url)
       .then(res => handleAnalysisResponse(res))
       .catch(err => handleAnalysisResponse({ success: false, error: err.message }));
+  }
+}
+
+// ─── Visual Verification Pipeline (Puppeteer) ──────────────────────────────
+function triggerVisualVerification(url, clientScreenshot = null) {
+  resetVisualCardUI();
+
+  const payload = {
+    url,
+    screenshot: clientScreenshot
+  };
+
+  if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+    chrome.runtime.sendMessage(
+      { type: 'VISUAL_VERIFY', payload },
+      (res) => {
+        if (res && res.success && res.data) {
+          currentVisualReport = res.data;
+          renderVisualReport(res.data);
+        } else {
+          renderVisualFallback(url);
+        }
+      }
+    );
+  } else {
+    // Direct fetch fallback
+    fetch(`${CONFIG.BACKEND_URL}/api/visual-verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+      .then(r => r.json())
+      .then(res => {
+        if (res && res.success) {
+          currentVisualReport = res;
+          renderVisualReport(res);
+        } else {
+          renderVisualFallback(url);
+        }
+      })
+      .catch(() => renderVisualFallback(url));
+  }
+}
+
+function resetVisualCardUI() {
+  if (visualVerdictBadge) {
+    visualVerdictBadge.className = 'visual-badge pending';
+    visualVerdictBadge.textContent = 'Checking...';
+  }
+  if (visualCloneBanner) visualCloneBanner.classList.add('hidden');
+  if (suspectPlaceholder) {
+    suspectPlaceholder.classList.remove('hidden');
+    suspectPlaceholder.innerHTML = '<span>Capturing tab...</span>';
+  }
+  if (suspectScreenshotImg) {
+    suspectScreenshotImg.classList.remove('visible');
+    suspectScreenshotImg.removeAttribute('src');
+  }
+  if (originalPlaceholder) {
+    originalPlaceholder.classList.remove('hidden');
+    originalPlaceholder.innerHTML = '<span>Rendering via Puppeteer...</span>';
+  }
+  if (originalScreenshotImg) {
+    originalScreenshotImg.classList.remove('visible');
+    originalScreenshotImg.removeAttribute('src');
+  }
+  if (similarityVal) similarityVal.textContent = '--';
+  if (similarityFill) similarityFill.style.width = '0%';
+  if (officialLinkRow) officialLinkRow.classList.add('hidden');
+  if (visualDiscrepanciesList) {
+    visualDiscrepanciesList.classList.add('hidden');
+    visualDiscrepanciesList.innerHTML = '';
+  }
+}
+
+function renderVisualReport(rep) {
+  if (!rep || !visualVerifyCard) return;
+
+  // 1. Verdict Badge
+  if (visualVerdictBadge) {
+    visualVerdictBadge.className = 'visual-badge';
+    if (rep.isVisualClone) {
+      visualVerdictBadge.classList.add('danger');
+      visualVerdictBadge.textContent = 'CLONE DETECTED';
+    } else if (rep.isAuthentic) {
+      visualVerdictBadge.classList.add('safe');
+      visualVerdictBadge.textContent = 'OFFICIAL BRAND';
+    } else {
+      visualVerdictBadge.classList.add('neutral');
+      visualVerdictBadge.textContent = 'NO CLONE DETECTED';
+    }
+  }
+
+  // 2. Clone Alert Banner
+  if (visualCloneBanner) {
+    if (rep.isVisualClone) {
+      visualCloneBanner.classList.remove('hidden');
+      if (visualBannerTitle) visualBannerTitle.textContent = rep.verdictTitle || 'Visual Impersonation Detected!';
+      if (visualBannerDesc) visualBannerDesc.textContent = rep.verdictMessage || 'This website mimics an official brand but is hosted on an unauthorized domain.';
+    } else {
+      visualCloneBanner.classList.add('hidden');
+    }
+  }
+
+  // 3. Suspect Screenshot Preview
+  if (rep.suspectScreenshot && suspectScreenshotImg) {
+    suspectScreenshotImg.src = rep.suspectScreenshot;
+    suspectScreenshotImg.classList.add('visible');
+    if (suspectPlaceholder) suspectPlaceholder.classList.add('hidden');
+  }
+
+  // 4. Original Site Screenshot Preview (from Puppeteer)
+  if (rep.originalScreenshot && originalScreenshotImg) {
+    originalScreenshotImg.src = rep.originalScreenshot;
+    originalScreenshotImg.classList.add('visible');
+    if (originalPlaceholder) originalPlaceholder.classList.add('hidden');
+    if (originalColTitle && rep.matchedBrand) {
+      originalColTitle.textContent = `${rep.matchedBrand} (Puppeteer)`;
+    }
+  }
+
+  // 5. Similarity Meter
+  const simScore = typeof rep.similarityScore === 'number' ? rep.similarityScore : 0;
+  if (similarityVal) similarityVal.textContent = `${simScore}%`;
+  if (similarityFill) {
+    similarityFill.style.width = `${simScore}%`;
+    similarityFill.className = 'similarity-fill';
+    if (rep.isVisualClone) {
+      similarityFill.classList.add('danger');
+    } else if (rep.isAuthentic) {
+      similarityFill.classList.add('safe');
+    } else {
+      similarityFill.classList.add('neutral');
+    }
+  }
+
+  // 6. Official Link
+  if (rep.officialUrl && officialLinkRow && officialLinkUrl) {
+    officialLinkRow.classList.remove('hidden');
+    officialLinkUrl.href = rep.officialUrl;
+    officialLinkUrl.textContent = rep.officialUrl;
+  }
+
+  // 7. Discrepancies
+  if (Array.isArray(rep.discrepancies) && rep.discrepancies.length > 0 && visualDiscrepanciesList) {
+    visualDiscrepanciesList.classList.remove('hidden');
+    visualDiscrepanciesList.innerHTML = rep.discrepancies
+      .map(d => `<li>${escapeHtml(d)}</li>`)
+      .join('');
+  }
+}
+
+function renderVisualFallback(url) {
+  if (visualVerdictBadge) {
+    visualVerdictBadge.className = 'visual-badge neutral';
+    visualVerdictBadge.textContent = 'CHECK COMPLETE';
+  }
+  if (suspectPlaceholder) {
+    suspectPlaceholder.innerHTML = '<span>No visual mimicry found</span>';
+  }
+  if (originalPlaceholder) {
+    originalPlaceholder.innerHTML = '<span>No registered brand target</span>';
   }
 }
 

@@ -1,118 +1,78 @@
 import React from 'react';
-import { Shield, CheckCircle2, Loader2, Search, Cpu, Globe, Key, AlertTriangle, Database, WifiOff } from 'lucide-react';
+import { Shield, Loader2, CheckCircle, Search, Cpu, Globe, Server, AlertCircle } from 'lucide-react';
 
 const STAGES = [
-  {
-    id   : 1,
-    label: 'Validating URL',
-    icon : Globe,
-    desc : 'Checking protocol, format, and RFC standards'
-  },
-  {
-    id   : 2,
-    label: 'Extracting URL features',
-    icon : Search,
-    desc : 'Parsing lexical, structural, and hostname signals'
-  },
-  {
-    id   : 3,
-    label: 'Checking security indicators',
-    icon : AlertTriangle,
-    desc : 'Analyzing brand lookalikes, keywords, and path structures'
-  },
-  {
-    id   : 4,
-    label: 'Threat intelligence',
-    icon : Database,
-    desc : 'Querying reputation providers (if configured)',
-    hasTiNote: true
-  },
-  {
-    id   : 5,
-    label: 'Feature-based risk prediction',
-    icon : Cpu,
-    desc : 'Evaluating structural signals with ML-ready predictor'
-  },
-  {
-    id   : 6,
-    label: 'Generating explainable verdict',
-    icon : Key,
-    desc : 'Building transparent risk breakdown and recommendations'
-  }
+  { id: 1, label: 'Validating URL',              desc: 'Checking protocol, format, and RFC standards', icon: Globe },
+  { id: 2, label: 'Extracting URL features',     desc: 'Parsing lexical, structural, and hostname signals', icon: Search },
+  { id: 3, label: 'Checking security indicators',desc: 'Analyzing brand lookalikes, keywords, and path structures', icon: Shield },
+  { id: 4, label: 'Threat intelligence',         desc: 'Querying reputation providers', hasTiNote: true, icon: Server },
+  { id: 5, label: 'Feature-based risk prediction',desc: 'Evaluating structural signals with risk predictor', icon: Cpu },
+  { id: 6, label: 'Generating explainable verdict',desc: 'Building transparent risk breakdown and recommendations', icon: AlertCircle },
 ];
 
 export default function ScanningProgress({
-  stage: currentStageIndex = 0,
+  stage,
+  currentStageIndex: csi,
   targetUrl = '',
-  tiConfigured = false
+  tiConfigured = false,
 }) {
+  const currentStageIndex = stage ?? csi ?? 0;
+  const progressPercent = Math.min(100, Math.round((currentStageIndex / STAGES.length) * 100));
+
   return (
-    <div className="scanning-overlay-card">
-      <div className="scanning-modal-body">
-        {/* Header with spinning shield */}
-        <div className="scanning-header-center">
-          <div className="shield-pulsing-wrapper">
-            <div className="shield-ping-circle" />
-            <div className="shield-inner-icon">
-              <Shield size={32} className="shield-cyan" />
+    <div className="wg-page-wrap">
+      <div className="wrap" style={{ display: 'flex', justifyContent: 'center', padding: '60px 24px' }}>
+        <div className="wg-scanner-console">
+          
+          <div className="wg-scanner-header">
+            <div className="scanner-status">
+              <Loader2 className="spin-icon" size={24} color="#0891B2" />
+              <h2>Active Threat Analysis</h2>
+            </div>
+            <div className="scanner-target">
+              <span className="target-label">TARGET:</span>
+              <span className="target-url">{targetUrl}</span>
             </div>
           </div>
-          <h3 className="scanning-title">Security Analysis in Progress</h3>
-          <p className="scanning-target-url" title={targetUrl}>{targetUrl}</p>
-        </div>
 
-        {/* Stage list */}
-        <div className="stages-progress-list">
-          {STAGES.map((stage, idx) => {
-            const isCompleted = idx < currentStageIndex;
-            const isCurrent   = idx === currentStageIndex;
-            const isPending   = idx > currentStageIndex;
+          <div className="wg-scanner-progress-bar-wrap">
+            <div className="wg-scanner-progress-bar" style={{ width: `${progressPercent}%` }}></div>
+          </div>
 
-            // For stage 4 (Threat Intelligence), show a contextual note
-            const isTiStage = stage.hasTiNote;
+          <div className="wg-scanner-body">
+            <div className="wg-stage-list">
+              {STAGES.map((s, idx) => {
+                const done    = idx < currentStageIndex;
+                const active  = idx === currentStageIndex;
+                const pending = idx > currentStageIndex;
+                const stateKey = done ? 'done' : active ? 'active' : 'pending';
+                const Icon = s.icon;
 
-            return (
-              <div
-                key={stage.id}
-                className={`stage-row ${isCompleted ? 'completed' : ''} ${isCurrent ? 'current' : ''} ${isPending ? 'pending' : ''}`}
-              >
-                <div className="stage-icon-status">
-                  {isCompleted ? (
-                    <CheckCircle2 size={18} className="icon-completed" />
-                  ) : isCurrent ? (
-                    <Loader2 size={18} className="icon-current spin" />
-                  ) : (
-                    <div className="status-dot-pending" />
-                  )}
-                </div>
+                return (
+                  <div key={s.id} className={`wg-stage-item ${stateKey}`}>
+                    <div className="stage-icon-wrap">
+                      {done ? <CheckCircle size={18} color="#10B981" /> : 
+                       active ? <Loader2 size={18} className="spin-icon" color="#38BDF8" /> : 
+                       <Icon size={18} color="#475569" />}
+                    </div>
+                    <div className="stage-content">
+                      <h4 className="stage-label">
+                        {s.hasTiNote && active && !tiConfigured
+                          ? 'Threat intelligence (Local analysis)'
+                          : s.label}
+                      </h4>
+                      <p className="stage-desc">{s.desc}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
 
-                <div className="stage-meta">
-                  <span className="stage-name">{stage.label}</span>
-                  <span className="stage-desc">
-                    {isTiStage && isCurrent
-                      ? tiConfigured
-                        ? 'Querying external reputation provider...'
-                        : 'Threat intelligence service unavailable — continuing with local analysis.'
-                      : stage.desc}
-                  </span>
-                  {isTiStage && !tiConfigured && isCurrent && (
-                    <span className="ti-stage-note">
-                      <WifiOff size={11} />
-                      &nbsp;No API key configured — local analysis only
-                    </span>
-                  )}
-                </div>
+          <div className="wg-scanner-footer">
+            <p>Heuristic Engine v2.4.1 &middot; Establishing secure telemetry link...</p>
+          </div>
 
-                {isCurrent  && <span className="stage-tag-active">ANALYZING</span>}
-                {isCompleted && <span className="stage-tag-done">VERIFIED</span>}
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="scanning-footer-note">
-          <span className="scan-live-pulse" />
-          <span>Non-invasive heuristic inspection • URL is never executed or visited</span>
         </div>
       </div>
     </div>

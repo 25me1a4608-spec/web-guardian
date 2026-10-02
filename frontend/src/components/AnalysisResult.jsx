@@ -1,663 +1,454 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  ShieldAlert, ShieldCheck, AlertTriangle, RotateCcw, Info,
-  CheckCircle2, XCircle, HelpCircle, Globe, Server, Layers,
-  Database, Wifi, WifiOff, AlertCircle, ChevronDown, ChevronUp,
-  Brain, BarChart2, ArrowRight, Activity, Sparkles
+  ShieldAlert, ShieldCheck, AlertTriangle, ArrowLeft, RotateCcw,
+  CheckCircle2, XCircle, Globe, Server, Cpu, BarChart2, Info,
+  Copy, Check, Share2, FileText, ChevronDown, ChevronUp, ExternalLink, Sparkles
 } from 'lucide-react';
+import { fetchVisualVerification } from '../services/api.js';
 
-/* ─── Severity chip ─────────────────────────────────────────────────────── */
-// Internal helper — not exported to avoid Vite Fast Refresh conflicts
-function getSeverityBadge(severity) {
-  switch (severity?.toLowerCase()) {
-    case 'critical': return <span className="severity-chip critical">CRITICAL</span>;
-    case 'high':     return <span className="severity-chip high">HIGH</span>;
-    case 'medium':   return <span className="severity-chip medium">MEDIUM</span>;
-    case 'low':
-    default:         return <span className="severity-chip low">LOW</span>;
-  }
-}
-
-/* ─── Animated Circular Threat Score Gauge (Requirement 8) ──────────────── */
-function ScoreCircleGauge({ score, riskLevel, strokeColor }) {
-  const radius = 46;
-  const circumference = 2 * Math.PI * radius; // ~289.03
+/* ── Human-Designed Executive Threat Gauge ──────────────────────────────── */
+function ScoreCircleGauge({ score, riskLevel }) {
   const clampedScore = Math.max(0, Math.min(100, Math.round(score || 0)));
+  const isHigh = riskLevel === 'HIGH' || riskLevel === 'HIGH RISK' || clampedScore >= 70;
+  const isSuspicious = riskLevel === 'SUSPICIOUS' || (clampedScore >= 31 && clampedScore < 70);
+
+  // Human professional security color palette (Crimson, Amber, Emerald)
+  const strokeColor = isHigh ? '#DC2626' : isSuspicious ? '#D97706' : '#059669';
+  const badgeBg = isHigh ? '#FEE2E2' : isSuspicious ? '#FEF3C7' : '#D1FAE5';
+  const badgeText = isHigh ? '#991B1B' : isSuspicious ? '#92400E' : '#065F46';
+  const statusLabel = isHigh ? 'HIGH RISK' : isSuspicious ? 'SUSPICIOUS' : 'SAFE';
+
+  const radius = 54;
+  const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (clampedScore / 100) * circumference;
 
   return (
-    <div
-      className="circular-gauge-container"
-      role="img"
-      aria-label={`Threat score: ${clampedScore} out of 100, classification: ${riskLevel}`}
-    >
-      <svg className="circular-gauge-svg" width="126" height="126" viewBox="0 0 120 120">
-        <defs>
-          <filter id={`gauge-glow-${riskLevel?.toLowerCase().replace(/\s+/g, '-') || 'risk'}`} x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="0" dy="0" stdDeviation="3.5" floodColor={strokeColor} floodOpacity="0.45" />
-          </filter>
-        </defs>
-        {/* Background Track */}
+    <div className="wg-score-gauge-wrap">
+      <svg width="150" height="150" viewBox="0 0 140 140" className="gauge-svg">
+        {/* Outer subtle dial tick ring */}
         <circle
-          className="gauge-circle-bg"
-          cx="60"
-          cy="60"
-          r={radius}
-          strokeWidth="8.5"
+          cx="70" cy="70" r="64"
+          fill="none"
+          stroke="var(--border, #E2E8F0)"
+          strokeWidth="1.5"
+          strokeDasharray="3 5"
+          opacity="0.7"
         />
-        {/* Progress Fill Circle */}
+        {/* Background track circle */}
         <circle
-          className="gauge-circle-fill"
-          cx="60"
-          cy="60"
-          r={radius}
-          strokeWidth="8.5"
+          cx="70" cy="70" r={radius}
+          fill="none"
+          stroke="var(--gauge-track, #F1F5F9)"
+          strokeWidth="10"
+        />
+        {/* Active progress arc */}
+        <circle
+          cx="70" cy="70" r={radius}
+          fill="none"
           stroke={strokeColor}
+          strokeWidth="10"
           strokeDasharray={circumference}
           strokeDashoffset={strokeDashoffset}
           strokeLinecap="round"
-          filter={`url(#gauge-glow-${riskLevel?.toLowerCase().replace(/\s+/g, '-') || 'risk'})`}
-          transform="rotate(-90 60 60)"
+          transform="rotate(-90 70 70)"
+          style={{ transition: 'stroke-dashoffset 0.8s ease-in-out' }}
         />
       </svg>
-      <div className="gauge-center-text">
-        <div className="gauge-score-number">{clampedScore}</div>
-        <div className="gauge-score-total">/ 100</div>
-        <div className="gauge-score-label">THREAT SCORE</div>
+      <div className="gauge-overlay">
+        <span className="gauge-num" style={{ color: strokeColor }}>{clampedScore}</span>
+        <span className="gauge-max">/ 100</span>
+        <span
+          className="gauge-tag-pill"
+          style={{ backgroundColor: badgeBg, color: badgeText }}
+        >
+          {statusLabel}
+        </span>
       </div>
     </div>
   );
 }
 
-/* ─── Threat Intelligence section ───────────────────────────────────────── */
-function ThreatIntelSection({ ti, analysisMode }) {
-  if (!ti) return null;
-
-  let statusClass = 'ti-status-unavailable';
-  let StatusIcon  = WifiOff;
-  let statusLabel = 'Unavailable';
-
-  if (!ti.available) {
-    statusClass = 'ti-status-unavailable';
-    StatusIcon  = WifiOff;
-    statusLabel = analysisMode === 'local'
-      ? 'Demo / Local Analysis Mode'
-      : 'Threat Intelligence Unavailable';
-  } else if (ti.knownMalicious) {
-    statusClass = 'ti-status-malicious';
-    StatusIcon  = AlertCircle;
-    statusLabel = 'Known Malicious';
-  } else if (ti.suspicious) {
-    statusClass = 'ti-status-suspicious';
-    StatusIcon  = AlertTriangle;
-    statusLabel = 'Suspicious Reputation';
-  } else {
-    statusClass = 'ti-status-clean';
-    StatusIcon  = CheckCircle2;
-    statusLabel = 'No Known Threat';
-  }
-
-  return (
-    <div className="section-card ti-card">
-      <div className="section-header">
-        <div className="section-icon-box"><Database size={20} /></div>
-        <div>
-          <h3 className="section-title">Threat Intelligence</h3>
-          <p className="section-subtitle">
-            {ti.available ? `Reputation lookup via ${ti.provider}` : 'External reputation check status'}
-          </p>
-        </div>
-      </div>
-
-      <div className={`ti-status-badge ${statusClass}`}>
-        <StatusIcon size={20} className="ti-status-icon" />
-        <div className="ti-status-text">
-          <span className="ti-status-label">{statusLabel}</span>
-          <span className="ti-status-message">{ti.message}</span>
-        </div>
-      </div>
-
-      {ti.available && ti.totalEngines && (
-        <div className="ti-engines-row">
-          <span className="ti-engines-label">Detections / Engines:</span>
-          <span className="ti-engines-value">{ti.detections} / {ti.totalEngines}</span>
-        </div>
-      )}
-
-      {!ti.available && (
-        <p className="ti-disclaimer">
-          Unavailability does not indicate the URL is safe — score is based on local structural
-          analysis and feature-based prediction only.
-        </p>
-      )}
-    </div>
-  );
-}
-
-/* ─── AI Risk Analysis section ───────────────────────────────────────────── */
-function MlPredictionSection({ ml }) {
-  if (!ml) return null;
-
-  const confColor = ml.confidence === 'HIGH'
-    ? '#ef4444'
-    : ml.confidence === 'MEDIUM'
-    ? '#f59e0b'
-    : '#22c55e';
-
-  const predColor = ml.prediction === 'HIGH'
-    ? '#ef4444'
-    : ml.prediction === 'MEDIUM'
-    ? '#f59e0b'
-    : ml.prediction === 'LOW'
-    ? '#22c55e'
-    : '#64748b';
-
-  return (
-    <div className="section-card ml-card">
-      <div className="section-header">
-        <div className="section-icon-box"><Brain size={20} /></div>
-        <div>
-          <h3 className="section-title">AI Risk Analysis</h3>
-          <p className="section-subtitle">
-            {ml.modelLabel || 'Feature-based prediction'}
-          </p>
-        </div>
-      </div>
-
-      {ml.available ? (
-        <>
-          <div className="ml-metrics-row">
-            <div className="ml-metric">
-              <span className="ml-metric-label">Prediction</span>
-              <span className="ml-metric-value" style={{ color: predColor }}>
-                {ml.prediction}
-              </span>
-            </div>
-            <div className="ml-metric">
-              <span className="ml-metric-label">Prediction Type</span>
-              <span className="ml-metric-value neutral">Feature-Based</span>
-            </div>
-            <div className="ml-metric">
-              <span className="ml-metric-label">Confidence</span>
-              <span className="ml-metric-value" style={{ color: confColor }}>
-                {ml.confidence}
-              </span>
-            </div>
-          </div>
-
-          <div className="ml-how-section">
-            <div className="ml-how-title">
-              <Activity size={14} />
-              <span>How the prediction was made</span>
-            </div>
-            <p className="ml-how-body">
-              The system evaluates 18 normalized URL characteristics — including URL length,
-              hostname structure, suspicious keywords, protocol security, subdomain depth,
-              brand pattern matching, and special character usage — and combines them using
-              a hand-weighted model. This is a <strong>feature-based prediction</strong>,
-              not a trained ML classifier. No training data, accuracy, or precision metrics
-              are claimed.
-            </p>
-          </div>
-
-          {ml.note && (
-            <p className="ml-disclaimer">{ml.note}</p>
-          )}
-        </>
-      ) : (
-        <div className="ml-unavailable">
-          <WifiOff size={16} />
-          <span>{ml.note || 'ML prediction layer unavailable.'}</span>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ─── Security signals flow visualization ───────────────────────────────── */
-function SignalsVisualization({ scoreBreakdown, localIndicators, ti, ml }) {
-  if (!scoreBreakdown) return null;
-
-  const signals = [
-    {
-      key  : 'local',
-      label: 'URL Analysis',
-      desc : `${localIndicators?.length || 0} indicator${localIndicators?.length !== 1 ? 's' : ''} detected`,
-      pts  : scoreBreakdown.localAnalysis,
-      color: '#38bdf8',
-      pct  : scoreBreakdown.total > 0 ? Math.round((scoreBreakdown.localAnalysis / scoreBreakdown.total) * 100) : 0
-    },
-    {
-      key  : 'ti',
-      label: 'Threat Intelligence',
-      desc : ti?.available ? (ti.knownMalicious ? 'Known malicious' : ti.suspicious ? 'Suspicious' : 'Clean') : 'Unavailable',
-      pts  : scoreBreakdown.threatIntelligence,
-      color: '#a78bfa',
-      pct  : scoreBreakdown.total > 0 ? Math.round((scoreBreakdown.threatIntelligence / scoreBreakdown.total) * 100) : 0
-    },
-    {
-      key  : 'ml',
-      label: 'Feature Prediction',
-      desc : ml?.available ? `Prediction: ${ml.prediction}` : 'Unavailable',
-      pts  : scoreBreakdown.mlPrediction,
-      color: '#34d399',
-      pct  : scoreBreakdown.total > 0 ? Math.round((scoreBreakdown.mlPrediction / scoreBreakdown.total) * 100) : 0
-    }
-  ];
-
-  return (
-    <div className="section-card signals-card">
-      <div className="section-header">
-        <div className="section-icon-box"><BarChart2 size={20} /></div>
-        <div>
-          <h3 className="section-title">Risk Signal Breakdown</h3>
-          <p className="section-subtitle">How three independent layers combine into the final score</p>
-        </div>
-      </div>
-
-      {/* Flow diagram */}
-      <div className="signals-flow">
-        {signals.map((s, i) => (
-          <React.Fragment key={s.key}>
-            <div className="signal-node">
-              <div className="signal-bar-wrapper">
-                <div
-                  className="signal-bar-fill"
-                  style={{ height: `${Math.max(4, (s.pts / 100) * 80)}px`, backgroundColor: s.color }}
-                />
-              </div>
-              <div className="signal-label">{s.label}</div>
-              <div className="signal-desc">{s.desc}</div>
-              <div className="signal-pts" style={{ color: s.color }}>
-                +{s.pts} pts
-              </div>
-            </div>
-            {i < signals.length - 1 && (
-              <div className="signal-arrow"><ArrowRight size={18} /></div>
-            )}
-          </React.Fragment>
-        ))}
-
-        <div className="signal-arrow"><ArrowRight size={18} /></div>
-
-        <div className="signal-total-node">
-          <div className="signal-total-value">{scoreBreakdown.total}</div>
-          <div className="signal-total-label">Final Score</div>
-          <div className="signal-total-sub">/ 100</div>
-        </div>
-      </div>
-
-      {/* Bar chart per signal */}
-      <div className="signals-bars">
-        {signals.map(s => (
-          <div key={s.key} className="signal-row-bar">
-            <span className="signal-row-label">{s.label}</span>
-            <div className="signal-track">
-              <div
-                className="signal-fill"
-                style={{ width: `${s.pts}%`, backgroundColor: s.color }}
-              />
-            </div>
-            <span className="signal-row-pts">{s.pts} pts</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/* ─── Main result component ──────────────────────────────────────────────── */
 export default function AnalysisResult({ result, onScanAnother }) {
+  const [copied, setCopied]                   = useState(false);
   const [showTechDetails, setShowTechDetails] = useState(false);
+  const [visualData, setVisualData]           = useState(null);
+  const [loadingVisual, setLoadingVisual]     = useState(false);
 
   if (!result) return null;
 
   const {
-    url,
+    url             = '',
     score           = 0,
     riskLevel       = 'LOW',
     indicators      = [],
     explanation,
     whyThisScore,
     keyFindings     = [],
-    keyFactors      = [],
     recommendation,
     recommendations = [],
     threatIntelligence: ti,
     mlPrediction    : ml,
     scoreBreakdown,
     details         = {},
-    analysisMode,
     analyzedAt
   } = result;
 
-  const isHigh       = riskLevel === 'HIGH'       || riskLevel === 'HIGH RISK';
-  const isSuspicious = riskLevel === 'SUSPICIOUS';
-  const displayFindings = keyFindings.length > 0 ? keyFindings : keyFactors;
+  useEffect(() => {
+    if (url) {
+      setLoadingVisual(true);
+      fetchVisualVerification(url)
+        .then(data => {
+          setVisualData(data);
+          setLoadingVisual(false);
+        })
+        .catch(() => setLoadingVisual(false));
+    }
+  }, [url]);
+
+  const isHigh       = riskLevel === 'HIGH' || riskLevel === 'HIGH RISK' || score >= 70;
+  const isSuspicious = riskLevel === 'SUSPICIOUS' || (score >= 31 && score < 70);
+  const isSafe       = !isHigh && !isSuspicious;
+
+  const statusClass  = isHigh ? 'danger' : isSuspicious ? 'warning' : 'safe';
+  const statusLabel  = isHigh ? 'HIGH RISK THREAT' : isSuspicious ? 'SUSPICIOUS REPUTATION' : 'SAFE BASESECURE';
+
+  const handleCopyUrl = () => {
+    navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
-    <div className="result-page-container">
-
-      {/* ── Demo Mode Indicator Banner (Requirement 4) ──────────────────── */}
-      {result.isDemo && (
-        <div className="demo-result-banner" role="status">
-          <div className="demo-banner-pill">
-            <Sparkles size={14} />
-            <span>Demo Scenario</span>
-          </div>
-          <p className="demo-banner-text">
-            This result is from a predefined test scenario executed on WebGuard's real backend analysis pipeline. Threat intelligence is reported accurately without fabrication.
-          </p>
-        </div>
-      )}
-
-      {/* ── High-Risk Security Warning Action Bar (Requirement 20) ──────── */}
-      {isHigh && (
-        <div className="high-risk-alert-bar" role="alert">
-          <div className="alert-bar-left">
-            <div className="alert-bar-icon-wrap">
-              <ShieldAlert size={26} className="alert-bar-icon" />
-            </div>
-            <div className="alert-bar-content">
-              <div className="alert-bar-badge">
-                <span className="alert-pulse-dot" />
-                <span>CRITICAL SECURITY WARNING</span>
-              </div>
-              <h3 className="alert-bar-title">Phishing or Deceptive Link Detected</h3>
-              <p className="alert-bar-desc">
-                This URL exhibits high-confidence characteristics of a deceptive website.
-                <strong> Do not enter passwords, credit cards, or personal credentials.</strong>
-              </p>
-            </div>
-          </div>
-          <div className="alert-bar-actions">
+    <div className="wg-page-wrap">
+      {/* Back Bar & Quick Actions */}
+      <section className="wg-result-top-bar">
+        <div className="wrap">
+          <div className="wg-result-bar-inner">
             <button
               type="button"
-              className="btn-alert-back"
+              className="wg-btn wg-btn-outline wg-btn-sm"
               onClick={onScanAnother}
-              title="Return safely to URL scanner"
             >
-              <RotateCcw size={15} />
-              <span>Go Back</span>
+              <ArrowLeft size={16} />
+              <span>Back to Threat Scanner</span>
             </button>
-            <button
-              type="button"
-              className="btn-alert-details"
-              onClick={() => {
-                const el = document.getElementById('indicators-section');
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-              }}
-              title="Inspect detected indicators below"
-            >
-              <ChevronDown size={15} />
-              <span>View Details</span>
-            </button>
+
+            <div className="result-top-actions">
+              {result.isDemo && (
+                <span className="wg-demo-pill">DEMO BENCHMARK TEST</span>
+              )}
+              <button
+                type="button"
+                className="wg-btn wg-btn-ghost wg-btn-sm"
+                onClick={handleCopyUrl}
+              >
+                {copied ? <Check size={14} color="#16A34A" /> : <Copy size={14} />}
+                <span>{copied ? 'Copied URL' : 'Copy Target URL'}</span>
+              </button>
+              <button
+                type="button"
+                className="wg-btn wg-btn-primary wg-btn-sm"
+                onClick={onScanAnother}
+              >
+                <RotateCcw size={14} />
+                <span>Scan Another URL</span>
+              </button>
+            </div>
           </div>
         </div>
-      )}
+      </section>
 
-      {/* ── 1. RISK LEVEL & 2. RISK SCORE (Centerpiece Circular Gauge) ────── */}
-      <div className={`result-hero-card ${isHigh ? 'tier-high' : isSuspicious ? 'tier-suspicious' : 'tier-low'}`}>
-        <div className="hero-top-row">
-          <div className="risk-level-display">
-            <div className="risk-icon-wrapper">
-              {isHigh
-                ? <ShieldAlert   size={36} className="risk-main-icon high" />
-                : isSuspicious
-                ? <AlertTriangle size={36} className="risk-main-icon suspicious" />
-                : <ShieldCheck   size={36} className="risk-main-icon low" />}
-            </div>
-            <div className="risk-level-info">
-              <div className="risk-pill-badge">
-                <span className="dot" /><span>RISK CLASSIFICATION</span>
+      {/* Main Analysis Result Body */}
+      <section className="wg-section">
+        <div className="wrap">
+          {/* CRITICAL WARNING BANNER IF HIGH RISK */}
+          {isHigh && (
+            <div className="wg-alert-banner danger">
+              <div className="banner-icon">
+                <ShieldAlert size={28} color="#DC2626" />
               </div>
-              <h2 className="risk-level-title">
-                {isHigh ? 'HIGH RISK' : isSuspicious ? 'SUSPICIOUS' : 'LOW RISK'}
-              </h2>
-              <p className="risk-level-caption">
-                {isHigh
-                  ? 'Multiple critical indicators of phishing deception or spoofing detected.'
-                  : isSuspicious
-                  ? 'Heuristic and structural abnormalities flagged. Exercise caution.'
-                  : 'No significant malicious patterns or threat indicators detected.'}
-              </p>
-            </div>
-          </div>
-
-          <div className="score-meter-box">
-            <ScoreCircleGauge
-              score={score}
-              riskLevel={isHigh ? 'HIGH RISK' : isSuspicious ? 'SUSPICIOUS' : 'LOW RISK'}
-              strokeColor={isHigh ? '#ef4444' : isSuspicious ? '#f59e0b' : '#10b981'}
-            />
-          </div>
-        </div>
-
-        <div className="inspected-url-bar">
-          <div className="inspected-url-label"><Globe size={14} /><span>ANALYZED TARGET</span></div>
-          <div className="inspected-url-text" title={url}>{url}</div>
-        </div>
-
-        <div className={`analysis-mode-badge ${analysisMode === 'full' ? 'mode-full' : 'mode-local'}`}>
-          {analysisMode === 'full'
-            ? <><Wifi size={12} /> Full Analysis (Threat Intelligence Active)</>
-            : <><WifiOff size={12} /> Demo / Local Analysis Mode — Threat Intelligence Unavailable</>}
-        </div>
-      </div>
-
-      {/* ── 3. WHY THIS SCORE? (Requirement 10) ──────────────────────────── */}
-      <div className="section-card explanation-card">
-        <div className="section-header">
-          <div className="section-icon-box"><HelpCircle size={20} /></div>
-          <div>
-            <h3 className="section-title">Why This Score?</h3>
-            <p className="section-subtitle">Plain-English reasoning from the WebGuard analysis pipeline</p>
-          </div>
-        </div>
-        <div className="explanation-body">
-          <p className="explanation-text">{explanation}</p>
-          {whyThisScore && <p className="explanation-why">{whyThisScore}</p>}
-          {displayFindings?.length > 0 && (
-            <div className="key-factors-list">
-              {displayFindings.map((f, i) => (
-                <div key={i} className="factor-item">
-                  <div className="factor-bullet" />
-                  <span>{f}</span>
-                </div>
-              ))}
+              <div className="banner-text">
+                <div className="banner-badge danger">CRITICAL SECURITY WARNING</div>
+                <h3>Malicious or Deceptive Target Detected</h3>
+                <p>
+                  This URL matches known credential harvesting, brand impersonation, or phishing infrastructure. <strong>Do NOT enter passwords, credit cards, or MFA security tokens.</strong>
+                </p>
+              </div>
+              <button
+                type="button"
+                className="wg-btn wg-btn-secondary wg-btn-sm"
+                onClick={onScanAnother}
+              >
+                Retreat to Safety
+              </button>
             </div>
           )}
-        </div>
-      </div>
 
-      {/* ── 4. KEY SECURITY INDICATORS (Requirement 10 & 20) ─────────────── */}
-      <div className="section-card indicators-card" id="indicators-section">
-        <div className="section-header">
-          <div className="section-icon-box"><Layers size={20} /></div>
-          <div className="section-header-meta">
-            <div>
-              <h3 className="section-title">Key Security Indicators</h3>
-              <p className="section-subtitle">
-                {indicators.length === 0
-                  ? 'No negative indicators identified'
-                  : `${indicators.length} structural or behavioral signal${indicators.length > 1 ? 's' : ''} flagged`}
-              </p>
-            </div>
-            <span className="count-pill">{indicators.length} Detected</span>
-          </div>
-        </div>
+          {/* MAIN SUMMARY HERO CARD */}
+          <div className={`wg-result-summary-card ${statusClass}`}>
+            <div className="summary-card-top">
+              <div className="target-url-info">
+                <span className="info-label">INSPECTED TARGET URL:</span>
+                <code className="target-url-string">{url}</code>
+              </div>
 
-        {indicators.length === 0 ? (
-          <div className="no-indicators-state">
-            <CheckCircle2 size={28} className="clean-icon" />
-            <div>
-              <h4>Clean Structural Baseline</h4>
-              <p>No known risk patterns detected from structural, lexical, protocol, and domain analysis.</p>
+              <div className={`status-badge-hero ${statusClass}`}>
+                {isHigh && <ShieldAlert size={18} />}
+                {isSuspicious && <AlertTriangle size={18} />}
+                {isSafe && <ShieldCheck size={18} />}
+                <span>{statusLabel}</span>
+              </div>
             </div>
-          </div>
-        ) : (
-          <div className="indicators-grid" id="indicators-list">
-            {indicators.map((ind, idx) => (
-              <div key={idx} className={`indicator-card ${ind.severity || 'low'}`}>
-                <div className="indicator-top">
-                  <div className="indicator-title-wrap">
-                    <span className={`indicator-dot-severity ${ind.severity || 'low'}`} />
-                    <span className="indicator-name">{ind.name || ind.id?.replace(/_/g, ' ')}</span>
+
+            <div className="summary-card-grid">
+              {/* Left Gauge */}
+              <div className="summary-gauge-col">
+                <ScoreCircleGauge score={score} riskLevel={riskLevel} />
+              </div>
+
+              {/* Right Summary Details */}
+              <div className="summary-details-col">
+                <h3 className="summary-heading">Analysis Diagnosis & AI Summary</h3>
+                <p className="summary-explanation-text">
+                  {explanation || whyThisScore || 'The automated analysis engine inspected domain WHOIS, SSL records, and lexical feature patterns to generate this security assessment.'}
+                </p>
+
+                <div className="summary-metrics-row">
+                  <div className="summary-metric">
+                    <span className="metric-lbl">Domain Age</span>
+                    <span className="metric-val">{details.domainAge || 'Verified / Mature'}</span>
                   </div>
-                  <div className="indicator-badges">
-                    {getSeverityBadge(ind.severity)}
-                    {ind.points != null && <span className="points-chip">+{ind.points} pts</span>}
+                  <div className="summary-metric">
+                    <span className="metric-lbl">SSL Certificate</span>
+                    <span className={`metric-val ${details.hasHttps !== false ? 'green-text' : 'red-text'}`}>
+                      {details.hasHttps !== false ? 'Valid TLS Encryption' : 'Missing / Self-Signed'}
+                    </span>
+                  </div>
+                  <div className="summary-metric">
+                    <span className="metric-lbl">Threat Feeds</span>
+                    <span className="metric-val">
+                      {ti?.knownMalicious ? 'Flagged Malicious' : ti?.suspicious ? 'Caution' : '0 Blacklists'}
+                    </span>
                   </div>
                 </div>
-                <p className="indicator-desc">{ind.description}</p>
               </div>
-            ))}
-          </div>
-        )}
-
-        {/* Security Signals Breakdown */}
-        {scoreBreakdown && (
-          <div className="indicators-breakdown-subarea">
-            <SignalsVisualization
-              scoreBreakdown={scoreBreakdown}
-              localIndicators={indicators}
-              ti={ti}
-              ml={ml}
-            />
-          </div>
-        )}
-      </div>
-
-      {/* ── 5. THREAT INTELLIGENCE (Requirement 10) ──────────────────────── */}
-      <ThreatIntelSection ti={ti} analysisMode={analysisMode} />
-
-      {/* ── 6. AI / FEATURE-BASED PREDICTION (Requirement 10) ────────────── */}
-      <MlPredictionSection ml={ml} />
-
-      {/* ── Security Recommendation ──────────────────────────────────────── */}
-      <div className="section-card recommendations-card">
-        <div className="section-header">
-          <div className="section-icon-box"><Info size={20} /></div>
-          <div>
-            <h3 className="section-title">Security Recommendation</h3>
-            <p className="section-subtitle">What you should do based on this threat profile</p>
-          </div>
-        </div>
-
-        {recommendation && (
-          <div className={`primary-recommendation ${isHigh ? 'danger' : isSuspicious ? 'warn' : 'safe'}`}>
-            <div className="rec-icon-wrapper">
-              {isHigh
-                ? <XCircle      size={20} className="icon-danger" />
-                : isSuspicious
-                ? <AlertTriangle size={20} className="icon-warn" />
-                : <CheckCircle2  size={20} className="icon-safe" />}
             </div>
-            <span className="rec-primary-text">{recommendation}</span>
           </div>
-        )}
 
-        <div className="recommendations-list">
-          {recommendations.map((rec, idx) => (
-            <div key={idx} className={`recommendation-item ${isHigh ? 'danger' : isSuspicious ? 'warn' : 'safe'}`}>
-              <div className="rec-icon-wrapper">
-                {isHigh
-                  ? <XCircle      size={16} className="icon-danger" />
-                  : isSuspicious
-                  ? <AlertTriangle size={16} className="icon-warn" />
-                  : <CheckCircle2  size={16} className="icon-safe" />}
+          {/* VISUAL VERIFICATION & PUPPETEER CLONE DETECTION */}
+          {visualData && visualData.visualCheckPerformed && (
+            <div className={`wg-card-box margin-top visual-verify-card ${visualData.isVisualClone ? 'threat-border' : ''}`}>
+              <div className="card-box-header">
+                <h3 className="card-box-title">
+                  <Sparkles size={18} color={visualData.isVisualClone ? '#DC2626' : '#0891B2'} />
+                  <span>Visual Clone & Impersonation Check (Puppeteer)</span>
+                </h3>
+                <span className={`card-box-tag ${visualData.isVisualClone ? 'danger-tag' : visualData.isAuthentic ? 'safe-tag' : 'neutral-tag'}`}>
+                  {visualData.isVisualClone ? 'CLONE DETECTED' : visualData.isAuthentic ? 'VERIFIED OFFICIAL' : 'CHECK COMPLETE'}
+                </span>
               </div>
-              <span className="rec-text">{rec}</span>
-            </div>
-          ))}
-        </div>
-      </div>
 
-      {/* ── Technical Details (collapsible) ─────────────────────────────── */}
-      <div className="section-card technical-details-card">
-        <button className="tech-details-toggle" onClick={() => setShowTechDetails(v => !v)}>
-          <div className="section-header-inline">
-            <div className="section-icon-box"><Server size={20} /></div>
-            <div>
-              <h3 className="section-title">Technical Extraction Details</h3>
-              <p className="section-subtitle">Normalized feature attributes used for classification</p>
-            </div>
-          </div>
-          {showTechDetails ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-        </button>
-
-        {showTechDetails && (
-          <div className="tech-details-grid">
-            <div className="tech-item">
-              <span className="tech-label">Apex Domain</span>
-              <span className="tech-value">{details.apexDomain || details.domain || 'N/A'}</span>
-            </div>
-            <div className="tech-item">
-              <span className="tech-label">Protocol</span>
-              <span className="tech-value">{details.protocol || 'N/A'}</span>
-            </div>
-            <div className="tech-item">
-              <span className="tech-label">HTTPS Encryption</span>
-              <span className={`tech-value ${details.hasHttps ? 'green' : 'red'}`}>
-                {details.hasHttps ? 'Yes (Encrypted)' : 'No (Unencrypted)'}
-              </span>
-            </div>
-            <div className="tech-item">
-              <span className="tech-label">IP-based Host</span>
-              <span className="tech-value">
-                {details.usesIpAddress ? 'Yes (IP Address)' : 'No (Standard Domain)'}
-              </span>
-            </div>
-            <div className="tech-item">
-              <span className="tech-label">URL Length</span>
-              <span className="tech-value">{details.urlLength || 0} chars</span>
-            </div>
-            <div className="tech-item">
-              <span className="tech-label">Subdomains</span>
-              <span className="tech-value">{details.subdomainCount ?? 0}</span>
-            </div>
-            {details.brandImpersonation && (
-              <div className="tech-item">
-                <span className="tech-label">Brand Impersonated</span>
-                <span className="tech-value red">{details.brandImpersonation}</span>
-              </div>
-            )}
-            {details.suspiciousKeywordsFound?.length > 0 && (
-              <div className="tech-item full-width">
-                <span className="tech-label">Suspicious Keywords</span>
-                <span className="tech-value">{details.suspiciousKeywordsFound.join(', ')}</span>
-              </div>
-            )}
-            {ml?.featureMap && Object.keys(ml.featureMap).length > 0 && (
-              <div className="tech-item full-width">
-                <span className="tech-label">Feature Vector (18 dimensions)</span>
-                <div className="feature-vector-grid">
-                  {Object.entries(ml.featureMap).map(([k, v]) => (
-                    <div key={k} className="fv-item">
-                      <span className="fv-key">{k}</span>
-                      <span className="fv-val">{v}</span>
+              <div className="card-box-body">
+                {visualData.isVisualClone && (
+                  <div className="visual-clone-alert-banner">
+                    <AlertTriangle size={20} color="#DC2626" />
+                    <div>
+                      <strong>{visualData.verdictTitle}</strong>
+                      <p>{visualData.verdictMessage}</p>
                     </div>
-                  ))}
+                  </div>
+                )}
+
+                <div className="visual-compare-grid">
+                  <div className="visual-compare-col">
+                    <span className="col-tag">Analyzed URL Screenshot</span>
+                    <div className="screenshot-container">
+                      {visualData.suspectScreenshot ? (
+                        <img src={visualData.suspectScreenshot} alt="Analyzed Site" className="visual-thumb" />
+                      ) : (
+                        <div className="visual-placeholder">Rendered Screenshot</div>
+                      )}
+                    </div>
+                    <span className="thumb-caption">{visualData.suspectDomain || url}</span>
+                  </div>
+
+                  <div className="visual-compare-col">
+                    <span className="col-tag green">
+                      Official Site (Puppeteer Headless)
+                    </span>
+                    <div className="screenshot-container">
+                      {visualData.originalScreenshot ? (
+                        <img src={visualData.originalScreenshot} alt="Original Site" className="visual-thumb" />
+                      ) : (
+                        <div className="visual-placeholder">Rendered via Puppeteer</div>
+                      )}
+                    </div>
+                    <span className="thumb-caption">
+                      {visualData.officialUrl ? (
+                        <a href={visualData.officialUrl} target="_blank" rel="noopener noreferrer">
+                          {visualData.officialUrl}
+                        </a>
+                      ) : 'Verified Registrar'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="visual-similarity-bar-wrap">
+                  <div className="sim-label-row">
+                    <span>Visual Resemblance Score:</span>
+                    <strong>{visualData.similarityScore}%</strong>
+                  </div>
+                  <div className="sim-track">
+                    <div
+                      className={`sim-fill ${visualData.isVisualClone ? 'danger' : 'safe'}`}
+                      style={{ width: `${visualData.similarityScore}%` }}
+                    />
+                  </div>
+                </div>
+
+                {Array.isArray(visualData.discrepancies) && visualData.discrepancies.length > 0 && (
+                  <ul className="visual-discrepancies-list">
+                    {visualData.discrepancies.map((d, i) => (
+                      <li key={i}>{d}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 2-COLUMN GRID: INDICATORS & RECOMMENDATIONS */}
+          <div className="wg-grid-2col margin-top">
+            {/* Left: Key Risk Indicators */}
+            <div className="wg-card-box">
+              <div className="card-box-header">
+                <h3 className="card-box-title">
+                  <AlertTriangle size={18} color="#0891B2" />
+                  <span>Detected Security Indicators ({indicators.length})</span>
+                </h3>
+                <span className="card-box-tag">18-Feature Vector</span>
+              </div>
+
+              <div className="card-box-body">
+                {indicators.length === 0 ? (
+                  <div className="wg-empty-state green">
+                    <CheckCircle2 size={24} color="#16A34A" />
+                    <p>No suspicious lexical or structural risk indicators were detected.</p>
+                  </div>
+                ) : (
+                  <div className="indicators-list">
+                    {indicators.map((ind, idx) => (
+                      <div key={idx} className={`indicator-item ${ind.severity || 'low'}`}>
+                        <div className="indicator-item-top">
+                          <span className="indicator-title">
+                            {ind.severity === 'high' || ind.severity === 'critical' ? '🚨' : '⚠️'} {ind.name || ind.id?.replace(/_/g, ' ')}
+                          </span>
+                          <span className={`indicator-sev-chip ${ind.severity || 'low'}`}>
+                            {ind.severity?.toUpperCase() || 'LOW'}
+                          </span>
+                        </div>
+                        <p className="indicator-desc">{ind.description}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Right: Security Recommendation */}
+            <div className="wg-card-box">
+              <div className="card-box-header">
+                <h3 className="card-box-title">
+                  <ShieldCheck size={18} color="#16A34A" />
+                  <span>Safety Guidance & Next Steps</span>
+                </h3>
+                <span className="card-box-tag">Action Plan</span>
+              </div>
+
+              <div className="card-box-body">
+                <div className={`recommendation-box ${statusClass}`}>
+                  <div className="rec-box-header">
+                    {isHigh && <XCircle size={20} color="#DC2626" />}
+                    {isSuspicious && <AlertTriangle size={20} color="#F59E0B" />}
+                    {isSafe && <CheckCircle2 size={20} color="#16A34A" />}
+                    <strong>{recommendation || (isHigh ? 'Block domain access immediately.' : isSuspicious ? 'Exercise extreme caution.' : 'Safe to visit.')}</strong>
+                  </div>
+                  <ul className="rec-steps-list">
+                    {recommendations.length > 0 ? (
+                      recommendations.map((rec, idx) => (
+                        <li key={idx}>✓ {rec}</li>
+                      ))
+                    ) : (
+                      <>
+                        <li>✓ Verify domain spelling in browser address bar.</li>
+                        <li>✓ Ensure password manager auto-fill functions properly.</li>
+                        <li>✓ Report suspicious links to security operations.</li>
+                      </>
+                    )}
+                  </ul>
+                </div>
+
+                <div className="action-button-group">
+                  <button
+                    type="button"
+                    className="wg-btn wg-btn-primary full-w"
+                    onClick={onScanAnother}
+                  >
+                    <RotateCcw size={16} />
+                    <span>Scan Another Suspicious URL</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Technical Details Accordion */}
+          <div className="wg-card-box margin-top">
+            <button
+              type="button"
+              className="tech-accordion-btn"
+              onClick={() => setShowTechDetails(!showTechDetails)}
+            >
+              <div className="tech-acc-title">
+                <Server size={18} color="#0891B2" />
+                <span>Technical Inspection Telemetry</span>
+              </div>
+              {showTechDetails ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+            </button>
+
+            {showTechDetails && (
+              <div className="tech-acc-content">
+                <div className="tech-data-grid">
+                  <div className="data-item">
+                    <span className="lbl">Apex Domain:</span>
+                    <span className="val">{details.apexDomain || details.domain || 'N/A'}</span>
+                  </div>
+                  <div className="data-item">
+                    <span className="lbl">Protocol Scheme:</span>
+                    <span className="val">{details.protocol || 'N/A'}</span>
+                  </div>
+                  <div className="data-item">
+                    <span className="lbl">IP Host Check:</span>
+                    <span className="val">{details.usesIpAddress ? 'Yes (IP Address Host)' : 'No (Hostname)'}</span>
+                  </div>
+                  <div className="data-item">
+                    <span className="lbl">URL String Length:</span>
+                    <span className="val">{details.urlLength || url.length} characters</span>
+                  </div>
+                  <div className="data-item">
+                    <span className="lbl">Subdomain Depth:</span>
+                    <span className="val">{details.subdomainCount ?? 0} level(s)</span>
+                  </div>
+                  <div className="data-item">
+                    <span className="lbl">Analyzed Timestamp:</span>
+                    <span className="val">{analyzedAt ? new Date(analyzedAt).toLocaleString() : new Date().toLocaleString()}</span>
+                  </div>
                 </div>
               </div>
             )}
-            <div className="tech-item">
-              <span className="tech-label">Analyzed At</span>
-              <span className="tech-value">
-                {analyzedAt ? new Date(analyzedAt).toLocaleTimeString() : 'N/A'}
-              </span>
-            </div>
           </div>
-        )}
-      </div>
-
-      {/* ── Action Footer ────────────────────────────────────────────────── */}
-      <div className="result-action-footer">
-        <button type="button" className="scan-another-btn" onClick={onScanAnother}>
-          <RotateCcw size={18} />
-          <span>Scan Another URL</span>
-        </button>
-      </div>
+        </div>
+      </section>
     </div>
   );
 }

@@ -4,10 +4,13 @@
   "private": true,
   "description": "WebGuard AI — Don't just detect the threat. Understand it.",
   "scripts": {
-    "dev": "npm run start",
-    "start": "echo 'Run backend: cd backend && npm run dev | Run frontend: cd frontend && npm run dev'",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "start": "npm run dev",
     "dev:frontend": "cd frontend && npm run dev",
     "dev:backend": "cd backend && npm run dev",
     "install:all": "cd backend && npm install && cd ../frontend && npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.5"
   }
 }

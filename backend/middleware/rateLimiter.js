@@ -1,16 +1,3 @@
-/**
- * WebGuard AI — Sliding Window Rate Limiting Middleware
- * backend/middleware/rateLimiter.js
- *
- * Step 9: DoS Prevention & Rate Limiting
- *
- * Implements an in-memory sliding window rate limiter.
- * Zero external dependencies. Highly efficient with automatic LRU cleanup.
- *
- * Configuration:
- *  - RATE_LIMIT_WINDOW_MS (default: 60000 = 1 minute)
- *  - RATE_LIMIT_MAX (default: 60 requests per minute)
- */
 
 const ipRequests = new Map(); // ip -> Array of timestamps
 

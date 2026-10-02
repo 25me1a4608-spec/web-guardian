@@ -93,6 +93,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         .catch(err => sendResponse({ success: false, error: err.message }));
       return true; // async response
 
+    case 'VISUAL_VERIFY':
+      handleVisualVerify(message.payload?.url, message.payload?.screenshot, message.payload?.brandHint)
+        .then(result => sendResponse(result))
+        .catch(err => sendResponse({ success: false, error: err.message }));
+      return true; // async response
+
+    case 'CAPTURE_ACTIVE_TAB':
+      chrome.tabs.captureVisibleTab(null, { format: 'jpeg', quality: 60 }, (dataUrl) => {
+        if (chrome.runtime.lastError || !dataUrl) {
+          sendResponse({ success: false, error: chrome.runtime.lastError?.message || 'Capture failed' });
+        } else {
+          sendResponse({ success: true, screenshot: dataUrl });
+        }
+      });
+      return true; // async response
+
     case 'SAFE_GO_BACK':
       handleSafeGoBack(sender.tab?.id)
         .then(() => sendResponse({ success: true }))
@@ -113,6 +129,54 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return false;
   }
 });
+
+/**
+ * Visual Verification Handler
+ * Communicates with WebGuard Puppeteer Visual Engine
+ */
+async function handleVisualVerify(rawUrl, screenshot = null, brandHint = null) {
+  if (!rawUrl || typeof rawUrl !== 'string') {
+    return { success: false, error: 'Valid URL is required for visual verification.' };
+  }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+  try {
+    const response = await fetch(`${CONFIG.BACKEND_URL}/api/visual-verify`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        url: rawUrl.trim(),
+        screenshot,
+        brandHint
+      }),
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      let errMsg = 'Visual verification could not be completed.';
+      try {
+        const errJson = await response.json();
+        if (errJson.error) errMsg = errJson.error;
+      } catch (_) {}
+      return { success: false, error: errMsg };
+    }
+
+    const data = await response.json();
+    return { success: true, data };
+  } catch (err) {
+    clearTimeout(timeoutId);
+    return {
+      success: false,
+      error: err.name === 'AbortError' ? 'Visual verification timed out.' : 'Visual verification service unavailable.'
+    };
+  }
+}
 
 /**
  * Health Check Handler

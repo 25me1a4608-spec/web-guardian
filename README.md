@@ -1,53 +1,52 @@
-# 🛡️ WebGuard AI — Phishing Risk Detection & Security Awareness
+# WebGuard AI - Explainable Phishing and Fake Website Detection System
 
-> **One-Line Pitch**:  
-> *"WebGuard AI is an explainable URL security system that analyzes suspicious links, combines multiple security signals, and explains to users not only whether a link looks risky, but why."*
-
-[![Backend Unit Tests](https://img.shields.io/badge/Unit%20Tests-54%20Pass%20%2F%200%20Fail-brightgreen)]()
-[![Security Audit](https://img.shields.io/badge/Security%20Audit-14%20Pass%20%2F%200%20Fail-brightgreen)]()
-[![Frontend Build](https://img.shields.io/badge/Frontend%20Build-Vite%208.2%20Pass-brightgreen)]()
-[![License](https://img.shields.io/badge/License-MIT-blue)]()
+> "Don't just detect the threat. Understand it."
+> An AI-powered, explainable URL security platform that analyzes suspicious links, extracts multi-signal threat vectors, and explains precisely why a link is dangerous in clear, actionable human language.
 
 ---
 
-## 🧭 Hackathon Presentation & Documentation Index
+## Documentation and Guides
 
-| Document | Purpose |
-| :--- | :--- |
-| 📊 [**`PRESENTATION_NOTES.md`**](file:///Users/achantiabhishek/fack%20web%20site%20detector%20AN/PRESENTATION_NOTES.md) | Complete 17-slide pitch deck guide with speaker notes (~5–6 min total). |
-| ⚖️ [**`JUDGE_QA.md`**](file:///Users/achantiabhishek/fack%20web%20site%20detector%20AN/JUDGE_QA.md) | 15 grounded technical answers for hackathon judges & evaluators. |
-| 🏗️ [**`ARCHITECTURE.md`**](file:///Users/achantiabhishek/fack%20web%20site%20detector%20AN/ARCHITECTURE.md) | In-depth technical specification, data flow, and Mermaid diagrams. |
-| ⏱️ [**`DEMO_SCRIPT.md`**](file:///Users/achantiabhishek/fack%20web%20site%20detector%20AN/DEMO_SCRIPT.md) | 2–3 minute timed conversational live demonstration script. |
-| 🚢 [**`DEPLOYMENT.md`**](file:///Users/achantiabhishek/fack%20web%20site%20detector%20AN/DEPLOYMENT.md) | Step-by-step production deployment guide for Render, Vercel, and Chrome. |
-| 🔒 [**`SECURITY.md`**](file:///Users/achantiabhishek/fack%20web%20site%20detector%20AN/SECURITY.md) | Comprehensive threat model, data minimization, and mitigation details. |
-
----
-
-## 💡 The Problem
-- **Sophisticated Deception**: Modern phishing attacks use subtle tricks like unencrypted IP hosts, homograph punycode, and multi-level subdomains that bypass human visual inspection.
-- **Opaque Warnings**: Traditional browser warnings act as black boxes ("Site Dangerous") without explaining *what* was detected, causing alert fatigue and ignored warnings.
-- **Delayed Blacklists**: It can take hours or days for newly deployed phishing domains to appear on centralized threat blacklists.
-
-## 🚀 The Solution: "Detect + Explain + Protect"
-WebGuard AI inspects URLs through a **7-stage defense-in-depth pipeline**:
-1. **Detect**: Evaluates 18 lexical and host indicators combined with optional threat intelligence and feature-based risk modeling.
-2. **Explain**: Synthesizes transparent, plain-English reasoning explaining which specific factors caused the score.
-3. **Protect**: Provides actionable guidance, dedicated high-risk alert bars, and one-click "Go Back" safe exits on both web and browser extension.
+- [PRESENTATION_NOTES.md](PRESENTATION_NOTES.md): Complete 17-slide pitch deck guide with speaker notes (5 to 6 min).
+- [JUDGE_QA.md](JUDGE_QA.md): 15 grounded technical answers for hackathon judges and evaluators.
+- [ARCHITECTURE.md](ARCHITECTURE.md): In-depth technical specification, data flow, and diagrams.
+- [DEMO_SCRIPT.md](DEMO_SCRIPT.md): 2 to 3 minute timed live demonstration script.
+- [DEPLOYMENT.md](DEPLOYMENT.md): Production deployment guide for Render, Vercel, and Chrome Web Store.
+- [SECURITY.md](SECURITY.md): Threat model, passive data minimization, and defense mechanisms.
+- [FINAL_AUDIT_REPORT.md](FINAL_AUDIT_REPORT.md): Step-by-step feature matrix, test metrics, and verification report.
 
 ---
 
-## ⚡ Technical Differentiators
+## The Problem
 
-1. **Explainable Threat Scoring**: Explains the exact reason a link was flagged rather than outputting a generic score.
-2. **18-Feature Vector Pipeline**: Extracts structural, lexical, and host attributes in pure Node.js in under 10ms.
-3. **Multi-Signal Hybrid Engine**: Weights local analysis (60%), threat intelligence (25%), and ML feature modeling (15%) with automatic dynamic fallback (85% local) during offline periods.
-4. **Honest Threat Intelligence**: Declares `"Local Analysis Mode"` when external API keys are absent, never fabricating fake antivirus hits.
-5. **Real-Time Browser Protection**: Manifest V3 Chrome Extension inspects active tabs on demand with minimal permissions.
-6. **Privacy-Conscious Architecture**: Strictly passive text inspection. No page fetching, zero user tracking, zero server database.
+1. Sophisticated Visual Deception: Modern phishing attacks bypass human visual inspection using subtle techniques like unencrypted IP hosts, homograph punycode domain spoofing, and multi-level subdomain obfuscation.
+2. Opaque Black-Box Warnings: Traditional web security tools display generic "Site Suspicious" alerts without explaining what triggered the warning, leading to alert fatigue and ignored safety warnings.
+3. Blacklist Delay: Newly registered phishing domains often stay active for hours or days before appearing on centralized threat feeds.
 
 ---
 
-## 🏗️ System Architecture
+## The Solution: Detect + Explain + Protect
+
+WebGuard AI inspects URLs through a 7-stage defense-in-depth pipeline:
+
+- Detect: Evaluates an 18-feature lexical vector (IP host detection, punycode, entropy scoring, path depth, suspicious TLDs, keyword spoofing) combined with optional threat intelligence and machine learning risk modeling.
+- Explain: Synthesizes transparent, plain-English reasoning explaining the specific risk factors that generated the threat score.
+- Protect: Provides clear human safety recommendations, high-risk alert banners, one-click safe retreat actions, and a real-time Chrome Extension (Manifest V3) for instant tab monitoring.
+
+---
+
+## Technical Differentiators
+
+- Explainable Risk Index (0 to 100): Explains why a URL received its score instead of outputting an opaque number.
+- 18-Feature Vector Pipeline: Pure Node.js feature extraction executes in under 10ms per request.
+- Multi-Signal Hybrid Engine: Combines local lexical analysis (60%), threat intelligence (25%), and ML feature modeling (15%) with dynamic offline fallback (100% local analysis when offline).
+- Transparent Fallback: Explicitly states "Local Analysis Mode" when threat feed API keys are omitted, ensuring honest risk communication.
+- Manifest V3 Chrome Shield: Real-time browser extension monitoring tab navigation requests with zero background bloat.
+- Privacy-First Architecture: Strictly passive URL text inspection. Zero page fetching, zero user tracking, zero server databases.
+
+---
+
+## System Architecture
 
 ```mermaid
 flowchart TD
@@ -77,72 +76,162 @@ flowchart TD
 
 ---
 
-## 💻 Technology Stack
+## Tech Stack
 
-| Layer | Technologies Used |
-| :--- | :--- |
-| **Frontend** | React 19, Vite 8.2, Vanilla CSS (Design Tokens, Dark Glassmorphism), Lucide Icons |
-| **Backend** | Node.js (ESM), Express 4, CORS, dotenv, In-Memory Sliding-Window Rate Limiting |
-| **Extension** | Manifest V3, Service Worker, Chrome Storage API, Responsive 360px Popup |
-| **Testing** | Native Node.js test runner: 54 Unit Tests + 14 Security Tests (100% Passing) |
-| **Deployment** | Vercel / Netlify (Frontend), Render / Railway / Docker (Backend API) |
+- Web Frontend: React 19, Vite 8.2, Lucide Icons, Vanilla CSS
+- Backend API: Node.js (ESM), Express 4, CORS, dotenv, In-Memory Sliding-Window Rate Limiter
+- Browser Extension: Manifest V3, Service Worker, Chrome Storage API, Responsive Popup UI
+- Testing and Quality: Native Node Test Suites (54 Unit Tests + 14 Security Tests)
+- Deployment: Vercel / Netlify (Frontend), Render / Railway / Docker (Backend API)
 
 ---
 
-## 🚀 Quickstart & Local Setup
+## Repository Structure
 
-### 1. Clone & Configure Environment
-```bash
-git clone https://github.com/your-username/webguard-ai.git
-cd webguard-ai
-
-# Copy environment templates
-cp .env.example .env
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
+```
+fake-wedsite/
+├── backend/
+│   ├── middleware/        # Rate limiting, CORS, safe logging
+│   ├── routes/            # Express endpoint definitions (/api/analyze, /api/health)
+│   ├── services/          # Feature extraction, risk engine, threat intelligence, ML model
+│   ├── utils/             # URL normalizer & validator
+│   ├── backendTests.js    # 54 automated unit tests
+│   ├── testSecuritySuite.js # 14 security & edge-case tests
+│   ├── server.js          # Main Express server (Port 5001)
+│   └── package.json
+│
+├── frontend/
+│   ├── src/
+│   │   ├── components/    # Modular React UI components (Scanner, Result, Academy, etc.)
+│   │   ├── services/      # Client API communication & offline fallback
+│   │   ├── utils/         # LocalStorage history & demo benchmarks
+│   │   ├── App.jsx        # Main React application
+│   │   ├── App.css        # Dashboard & responsive design styles
+│   │   └── index.css      # Core design tokens & base theme
+│   ├── package.json
+│   └── vite.config.js
+│
+├── extension/             # Chrome Extension (Manifest V3)
+│   ├── manifest.json      # Extension manifest & permissions
+│   ├── background.js      # Service worker active tab monitor
+│   ├── popup.html         # Responsive extension interface
+│   ├── popup.js           # Extension controller & API fetch
+│   └── popup.css          # Extension styling
+│
+├── ARCHITECTURE.md        # Technical architecture specification
+├── DEPLOYMENT.md          # Production deployment guide
+├── SECURITY.md            # Threat model & data protection
+├── JUDGE_QA.md            # Evaluator Q&A reference
+├── PRESENTATION_NOTES.md  # Pitch presentation script
+└── README.md              # Project overview
 ```
 
-### 2. Run the Backend API
+---
+
+## Quickstart and Local Setup
+
+### Prerequisites
+- Node.js: v18.0.0 or higher
+- npm: v9.0.0 or higher
+
+### 1. Clone the Repository
+```bash
+git clone https://github.com/your-username/fake-wedsite.git
+cd fake-wedsite
+```
+
+### 2. Start the Backend API Server
 ```bash
 cd backend
 npm install
-npm start
+npm run dev
 ```
-*Backend runs on `http://localhost:5001`.*
+The backend API starts on http://localhost:5001.
 
-### 3. Run the Frontend Web Application
+### 3. Start the Frontend Web Application
+Open a new terminal tab:
 ```bash
-cd ../frontend
+cd frontend
 npm install
 npm run dev
 ```
-*Frontend runs on `http://localhost:5173`.*
+The web app opens on http://localhost:5173.
 
 ### 4. Load the Chrome Extension
-1. Open Google Chrome and visit `chrome://extensions/`.
-2. Enable **Developer mode** (top right).
-3. Click **Load unpacked** and choose the `extension/` folder.
-4. Click the WebGuard AI shield icon on any open tab to inspect!
+1. Open Google Chrome and navigate to chrome://extensions.
+2. Enable Developer mode in the top-right corner.
+3. Click Load unpacked in the top-left menu.
+4. Select the extension folder from your project directory (D:\Fake Website Detector\code\extension).
+5. Click the WebGuard AI shield icon in your Chrome toolbar to inspect active tabs.
 
 ---
 
-## 🧪 Automated Test Suites
+## API Reference
+
+### POST /api/analyze
+Analyzes a target URL and returns a full explainable risk profile.
+
+#### Request Body
+```json
+{
+  "url": "http://login.paypal.verify-accounts.security-update.com/login.php"
+}
+```
+
+#### Response (200 OK)
+```json
+{
+  "success": true,
+  "url": "http://login.paypal.verify-accounts.security-update.com/login.php",
+  "score": 85,
+  "riskLevel": "HIGH",
+  "explanation": "CRITICAL RISK: This URL exhibits severe brand impersonation and multiple high-risk indicators.",
+  "whyThisScore": "Flagged due to unencrypted HTTP protocol, multiple subdomain levels (3), and brand spoofing keyword ('paypal').",
+  "indicators": [
+    {
+      "id": "brand_spoofing",
+      "name": "Brand Impersonation Detected",
+      "severity": "high",
+      "description": "Domain contains trusted brand keyword 'paypal' on an unauthorized apex domain."
+    },
+    {
+      "id": "unencrypted_http",
+      "name": "Missing HTTPS Encryption",
+      "severity": "medium",
+      "description": "Connection uses plain HTTP. Passwords transmitted over this link can be intercepted."
+    }
+  ],
+  "recommendation": "Block domain access immediately. Do NOT enter credentials.",
+  "analyzedAt": "2026-09-09T10:00:00.000Z"
+}
+```
+
+---
+
+## Testing and Verification
+
+Run the test suites from the project root:
 
 ```bash
-# Run backend unit tests (54 tests)
+# Run Backend Unit Tests (54 tests)
 cd backend && node backendTests.js
 
-# Run security & hardening tests (14 tests)
+# Run Hardened Security Audit Suite (14 tests)
 node testSecuritySuite.js
 
-# Build production frontend bundle
+# Validate Frontend Production Bundle
 cd ../frontend && npm run build
 ```
 
 ---
 
-## ⚠️ Known Limitations & Ethical Notice
+## Ethics and Disclaimer
 
-- **Passive Analysis**: WebGuard AI analyzes URL strings without executing target page scripts or rendering DOM content. It cannot detect dynamic phishing on compromised legitimate domains that have normal URL structures.
-- **No 100% Guarantees**: A low score indicates the absence of known heuristic anomalies, but cannot guarantee a link is completely safe.
-- **Threat Intelligence Quotas**: Live reputation checks depend on external provider API availability and rate limits.
+- Passive Inspection: WebGuard AI performs passive structural and lexical URL analysis. It does not execute target page JavaScript or render dynamic web content.
+- No Absolute Guarantees: A low threat score indicates an absence of detected heuristic anomalies, but does not guarantee a URL is 100% benign. Users should remain vigilant.
+
+---
+
+## License
+
+Distributed under the MIT License. See LICENSE for details.

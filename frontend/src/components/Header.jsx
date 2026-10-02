@@ -1,102 +1,115 @@
-import React from 'react';
-import { ShieldAlert, Activity, ShieldCheck, Cpu, History, LayoutDashboard, HelpCircle, BookOpen, Puzzle } from 'lucide-react';
+import React, { useState } from 'react';
+import { Shield, Activity, Menu, X, ChevronRight, Puzzle } from 'lucide-react';
 
 export default function Header({ activeTab, setActiveTab, isBackendOnline, isDemoMode }) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const navItems = [
+    { id: 'home', label: 'Home' },
+    { id: 'analysis', label: 'Threat Analysis' },
+    { id: 'academy', label: 'Cyber Academy' },
+    { id: 'intelligence', label: 'Threat Intelligence' },
+    { id: 'resources', label: 'Resources' },
+    { id: 'extension', label: 'Chrome Shield' },
+    { id: 'support', label: 'Support' },
+  ];
+
+  const handleNavClick = (id) => {
+    setActiveTab(id);
+    setMobileOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
-    <header className="cyber-header">
-      <div className="header-inner">
-        {/* Brand Logo & Motto */}
-        <div className="brand-wrapper" onClick={() => setActiveTab('scanner')} style={{ cursor: 'pointer' }}>
-          <div className="brand-icon-box">
-            <ShieldAlert size={22} className="brand-icon" />
-            <div className="brand-icon-pulse" />
-          </div>
-          <div className="brand-text">
-            <span className="brand-title">
-              WEBGUARD <span className="accent">AI</span>
-            </span>
-            <span className="brand-tagline">
-              "Don't just detect the threat. Understand it."
-            </span>
-          </div>
-        </div>
-
-        {/* Navigation Tabs */}
-        <nav className="header-nav" aria-label="Main Navigation">
-          <button
-            type="button"
-            className={`nav-btn ${activeTab === 'scanner' ? 'active' : ''}`}
-            onClick={() => setActiveTab('scanner')}
-          >
-            <ShieldCheck size={16} />
-            <span>Analyze</span>
-          </button>
-
-          <button
-            type="button"
-            className={`nav-btn ${activeTab === 'dashboard' ? 'active' : ''}`}
-            onClick={() => setActiveTab('dashboard')}
-          >
-            <LayoutDashboard size={16} />
-            <span>Dashboard</span>
-          </button>
-
-          <button
-            type="button"
-            className={`nav-btn ${activeTab === 'history' ? 'active' : ''}`}
-            onClick={() => setActiveTab('history')}
-          >
-            <History size={16} />
-            <span>History</span>
-          </button>
-
-          <button
-            type="button"
-            className={`nav-btn ${activeTab === 'how-it-works' ? 'active' : ''}`}
-            onClick={() => setActiveTab('how-it-works')}
-          >
-            <Cpu size={16} />
-            <span>About</span>
-          </button>
-
-          <button
-            type="button"
-            className={`nav-btn ${activeTab === 'awareness' ? 'active' : ''}`}
-            onClick={() => setActiveTab('awareness')}
-          >
-            <BookOpen size={16} />
-            <span>Awareness</span>
-          </button>
-
-          <button
-            type="button"
-            className={`nav-btn ${activeTab === 'extension' ? 'active' : ''}`}
-            onClick={() => setActiveTab('extension')}
-          >
-            <Puzzle size={16} />
-            <span>Browser Protection</span>
-          </button>
-        </nav>
-
-        {/* Hackathon Badge & Live Engine Status (Requirement 15) */}
-        <div className="header-status-group">
-          <div className="hackathon-badge-pill" title="WebGuard AI MVP — Built for responsible security awareness">
-            <span className="badge-highlight">Cybersecurity Analysis MVP</span>
-            <span className="badge-subtext">Built for responsible security awareness</span>
-          </div>
-
-          {isDemoMode && (
-            <div className="header-demo-tag">
-              <span className="demo-dot" />
-              <span>Demo Mode</span>
+    <header className="wg-header">
+      <div className="wrap">
+        <div className="wg-header-inner">
+          {/* Logo */}
+          <div className="wg-brand" onClick={() => handleNavClick('home')}>
+            <div className="wg-logo-icon">
+              <Shield size={20} color="#FFFFFF" strokeWidth={2.2} />
             </div>
-          )}
+            <div className="wg-brand-text">
+              <div className="wg-brand-title">
+                CyberAware <span className="wg-brand-subtitle-badge">SECURITY</span>
+              </div>
+              <div className="wg-brand-tagline">Protecting Users Through Cybersecurity Awareness</div>
+            </div>
+          </div>
 
-          <div className={`status-badge ${isBackendOnline ? 'online' : 'offline'}`}>
-            <span className="status-dot" />
-            <span>{isBackendOnline ? 'Backend API Active' : 'Backend Unavailable'}</span>
+          {/* Desktop Nav */}
+          <nav className="wg-nav-desktop" aria-label="Main Navigation">
+            {navItems.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                className={`wg-nav-btn ${activeTab === item.id ? 'active' : ''}`}
+                onClick={() => handleNavClick(item.id)}
+              >
+                {item.label}
+              </button>
+            ))}
+          </nav>
+
+          {/* Actions Right */}
+          <div className="wg-header-actions">
+            <div
+              className={`wg-status-badge ${isBackendOnline ? 'online' : 'offline'}`}
+              title={isBackendOnline ? 'AI ML Detection Engine Online' : 'Local Detection Engine Active'}
+            >
+              <span className="dot" />
+              <span>{isBackendOnline ? 'Engine Online' : 'Engine Ready'}</span>
+            </div>
+
+            {isDemoMode && (
+              <span className="wg-demo-pill">DEMO MODE</span>
+            )}
+
+            <button
+              type="button"
+              className="wg-btn wg-btn-primary wg-btn-sm"
+              onClick={() => handleNavClick('analysis')}
+            >
+              <span>Analyze URL</span>
+              <ChevronRight size={14} />
+            </button>
+
+            {/* Mobile Hamburger */}
+            <button
+              type="button"
+              className="wg-mobile-toggle"
+              onClick={() => setMobileOpen(!mobileOpen)}
+              aria-label="Toggle navigation menu"
+            >
+              {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile Dropdown */}
+        {mobileOpen && (
+          <div className="wg-mobile-menu">
+            {navItems.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                className={`wg-mobile-nav-btn ${activeTab === item.id ? 'active' : ''}`}
+                onClick={() => handleNavClick(item.id)}
+              >
+                {item.label}
+              </button>
+            ))}
+            <div className="wg-mobile-action-wrap">
+              <button
+                type="button"
+                className="wg-btn wg-btn-primary full-w"
+                onClick={() => handleNavClick('analysis')}
+              >
+                Analyze URL Now
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </header>
   );

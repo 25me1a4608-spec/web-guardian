@@ -322,3 +322,26 @@ function runClientFallback(rawUrl) {
     analyzedAt   : new Date().toISOString()
   };
 }
+
+/**
+ * Perform visual comparison against original website using Puppeteer
+ * @param {string} url
+ * @param {string|null} [screenshot]
+ * @returns {Promise<object|null>}
+ */
+export async function fetchVisualVerification(url, screenshot = null) {
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/visual-verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url, screenshot }),
+      signal: AbortSignal.timeout(20000)
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}

@@ -1,44 +1,26 @@
+/* =====================================================================
+   WEBGUARD AI — Base Design System (matches provided HTML spec)
+   ===================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 :root {
-  --bg-primary: #07090e;
-  --bg-secondary: #0d121d;
-  --bg-surface: rgba(15, 23, 42, 0.65);
-  --bg-surface-hover: rgba(22, 33, 62, 0.85);
-  --bg-input: rgba(8, 14, 26, 0.85);
-  
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-glass: rgba(0, 240, 255, 0.18);
-  --border-active: #00f0ff;
-  
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  --text-accent: #00f0ff;
-  
-  --cyan: #00f0ff;
-  --cyan-glow: rgba(0, 240, 255, 0.28);
-  --cyan-deep: #008fa0;
-  --emerald: #00ff9d;
-  --emerald-glow: rgba(0, 255, 157, 0.25);
-  --amber: #f59e0b;
-  --crimson: #ff3366;
-  --purple: #8b5cf6;
-  
-  --radius-sm: 8px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
-  --radius-xl: 28px;
-  --radius-full: 9999px;
-  
-  --shadow-cyber: 0 10px 30px -10px rgba(0, 240, 255, 0.2), 0 0 1px 1px rgba(0, 240, 255, 0.15);
-  --shadow-card: 0 20px 40px -15px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--border-subtle);
-  
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-display: 'Outfit', var(--font-sans);
-  --font-mono: 'JetBrains Mono', monospace;
-  
-  --transition-fast: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-normal: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-smooth: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  --primary:    #0F172A;
+  --secondary:  #1E293B;
+  --accent:     #0891B2;
+  --accent-dark:#0E7490;
+  --success:    #16A34A;
+  --success-bg: #F0FDF4;
+  --warning:    #F59E0B;
+  --warning-bg: #FFFBEB;
+  --danger:     #DC2626;
+  --danger-bg:  #FEF2F2;
+  --bg:         #F8FAFC;
+  --card:       #FFFFFF;
+  --border:     #E2E8F0;
+  --text-primary:   #0F172A;
+  --text-secondary: #475569;
+  --text-muted:     #64748B;
 }
 
 *, *::before, *::after {
@@ -48,92 +30,67 @@
 }
 
 html {
-  color-scheme: dark;
-  font-family: var(--font-sans);
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
   scroll-behavior: smooth;
 }
 
 body {
-  min-height: 100vh;
-  position: relative;
-  overflow-x: hidden;
-  background-color: var(--bg-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-weight: 400;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Background Cyber Grid & Light Bleeds */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image: 
-    linear-gradient(to right, rgba(0, 240, 255, 0.035) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(0, 240, 255, 0.035) 1px, transparent 1px);
-  background-size: 40px 40px;
-  mask-image: radial-gradient(circle at 50% 25%, black 40%, transparent 85%);
-  -webkit-mask-image: radial-gradient(circle at 50% 25%, black 40%, transparent 85%);
-  pointer-events: none;
-  z-index: 0;
-}
+img, svg { display: block; }
 
-body::after {
-  content: '';
-  position: fixed;
-  top: -150px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 900px;
-  height: 550px;
-  background: radial-gradient(ellipse at center, rgba(0, 240, 255, 0.12) 0%, rgba(99, 102, 241, 0.08) 40%, transparent 70%);
-  filter: blur(60px);
-  pointer-events: none;
-  z-index: 0;
-}
+a { color: inherit; text-decoration: none; }
+
+ul { list-style: none; }
 
 #root {
-  position: relative;
-  z-index: 1;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-::-webkit-scrollbar-track {
-  background: var(--bg-primary);
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(0, 240, 255, 0.2);
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 240, 255, 0.4);
+h1, h2, h3, h4 {
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--primary);
 }
 
-/* Selection */
-::selection {
-  background: rgba(0, 240, 255, 0.3);
-  color: #ffffff;
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
-/* Base button reset */
+/* Scrollbar */
+::-webkit-scrollbar        { width: 6px; }
+::-webkit-scrollbar-track  { background: #F1F5F9; }
+::-webkit-scrollbar-thumb  { background: #CBD5E1; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+
+::selection { background: #BAE6FD; color: #0F172A; }
+
 button {
   font-family: inherit;
-  border: none;
-  background: none;
   cursor: pointer;
 }
 
-input {
+input, textarea {
   font-family: inherit;
-  border: none;
-  outline: none;
+}
+
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.875em;
+  background: #F1F5F9;
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { scroll-behavior: auto !important; transition: none !important; }
 }

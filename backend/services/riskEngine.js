@@ -194,6 +194,15 @@ const RULES = {
     weight: 18,
     severity: 'medium',
     description: 'URL path contains chained authentication and verification segments, typical of phishing paths.'
+  },
+
+  // ── Free tunnel / temporary hosting abuse ──────────────────────────────
+  FREE_TUNNEL_HOST: {
+    id: 'FREE_TUNNEL_HOST',
+    name: 'Free Tunnel / Temporary Hosting',
+    weight: 35,
+    severity: 'high',
+    description: 'URL is hosted on a free tunnel or temporary hosting platform (e.g. trycloudflare.com, ngrok) — these are heavily abused to serve phishing pages with legitimate-looking HTTPS.'
   }
 };
 
@@ -310,6 +319,15 @@ export function calculateRisk(features) {
 
   // ── Unusual URL structure ────────────────────────────────────────────────
   if (features.unusualUrlStructure) fire('UNUSUAL_URL_STRUCTURE');
+
+  // ── Free tunnel / temporary hosting abuse ──────────────────────────────
+  if (features.freeTunnelHost) {
+    // Enrich the description with the specific platform detected
+    const rule = { ...RULES.FREE_TUNNEL_HOST };
+    rule.description = `URL is hosted on "${features.freeTunnelHost}" — a free tunnel/hosting platform heavily abused for phishing. Exercise extreme caution.`;
+    score += rule.weight;
+    fired.push({ id: rule.id, name: rule.name, severity: rule.severity, description: rule.description });
+  }
 
   // ── Clamp score to [0, 100] ───────────────────────────────────────────────
   score = Math.max(0, Math.min(100, score));
