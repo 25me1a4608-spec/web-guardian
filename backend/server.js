@@ -27,9 +27,17 @@ app.use((req, res, next) => {
 });
 
 // ── 2. Hardened CORS Configuration ──────────────────────────────────────────
+const defaultAllowed = [
+  'https://web-guardian-jo5g.vercel.app',
+  'https://web-guardian-seven.vercel.app',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:3000'
+];
+
 const allowedOrigins = process.env.FRONTEND_ORIGIN
-  ? process.env.FRONTEND_ORIGIN.split(',').map(s => s.trim().replace(/\/+$/, ''))
-  : ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:3000'];
+  ? [...process.env.FRONTEND_ORIGIN.split(',').map(s => s.trim().replace(/\/+$/, '')), ...defaultAllowed]
+  : defaultAllowed;
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -40,6 +48,11 @@ app.use(cors({
 
     // Always allow Chrome Extension origins in development and production
     if (normalizedOrigin.startsWith('chrome-extension://')) {
+      return callback(null, true);
+    }
+
+    // Always allow Vercel hosted apps (production and preview branches)
+    if (normalizedOrigin.endsWith('.vercel.app')) {
       return callback(null, true);
     }
 

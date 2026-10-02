@@ -13,19 +13,12 @@ export const ACTIVE_ENV = 'production'; // Options: 'development' | 'production'
 // ─── Environment Configurations ─────────────────────────────────────────────
 export const ENVIRONMENTS = {
   development: {
-    // Development local Express backend on port 5001
-    BACKEND_URL: 'http://localhost:5001',
-    // Development local Vite frontend on port 5173
-    WEBAPP_URL: 'http://localhost:5173'
+    BACKEND_URL: 'https://web-guardian-seven.vercel.app',
+    WEBAPP_URL: 'https://web-guardian-jo5g.vercel.app'
   },
   production: {
-    // REPLACE_AFTER_DEPLOYMENT: Replace with your actual deployed backend URL
-    // Example: 'https://webguard-api.onrender.com' or 'https://api.yourdomain.com'
     BACKEND_URL: 'https://web-guardian-seven.vercel.app',
-
-    // REPLACE_AFTER_DEPLOYMENT: Replace with your actual deployed frontend URL
-    // Example: 'https://webguard-ai.vercel.app' or 'https://yourdomain.com'
-    WEBAPP_URL: 'https://YOUR-FRONTEND-DOMAIN'
+    WEBAPP_URL: 'https://web-guardian-jo5g.vercel.app'
   }
 };
 

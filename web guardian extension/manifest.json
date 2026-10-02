@@ -35,6 +35,9 @@
   ],
 
   "host_permissions": [
+    "https://web-guardian-seven.vercel.app/*",
+    "https://web-guardian-jo5g.vercel.app/*",
+    "https://*.vercel.app/*",
     "http://localhost:5001/*",
     "http://127.0.0.1:5001/*"
   ],
