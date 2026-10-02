@@ -44,14 +44,11 @@ All endpoint URLs, timeouts, and storage keys are centralized in [`extension/con
 
 ```javascript
 export const CONFIG = {
-  // Local backend server (Express on port 5001)
-  BACKEND_URL: 'http://localhost:5001',
+  // Production backend URL
+  BACKEND_URL: 'https://web-guardian-seven.vercel.app',
 
-  // Production backend URL (toggle when deployed)
-  // BACKEND_URL: 'https://api.webguard-ai.com',
-
-  // Web application dashboard URL
-  WEBAPP_URL: 'http://localhost:5173',
+  // Production web application dashboard URL
+  WEBAPP_URL: 'https://web-guardian-jo5g.vercel.app',
 
   // Request timeout in milliseconds
   REQUEST_TIMEOUT_MS: 12000,

@@ -201,7 +201,7 @@ async function handleHealthCheck() {
     return { online: false, status: res.status };
   } catch (err) {
     clearTimeout(timer);
-    return { online: false, error: 'WebGuard backend is unavailable.' };
+    return { online: false, error: 'WebGuard AI service is temporarily unavailable.' };
   }
 }
 
@@ -247,7 +247,7 @@ async function handleAnalyzeUrl(rawUrl, isUserInitiated = true) {
     if (networkErr.name === 'AbortError') {
       return { success: false, error: 'Analysis timed out. Please try again.' };
     }
-    return { success: false, error: 'WebGuard backend is unavailable.' };
+    return { success: false, error: 'WebGuard AI service is temporarily unavailable. Please try again.' };
   }
 
   clearTimeout(timeoutId);

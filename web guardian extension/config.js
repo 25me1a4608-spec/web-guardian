@@ -6,19 +6,23 @@
  * Easily toggle between local development and deployed production backends.
  */
 
+// ─── Production Endpoint Constants ──────────────────────────────────────────
+export const BACKEND_URL = 'https://web-guardian-seven.vercel.app';
+export const WEBAPP_URL = 'https://web-guardian-jo5g.vercel.app';
+
 // ─── Environment Selector ───────────────────────────────────────────────────
-// Change to 'production' once your backend and frontend are deployed.
+// Set to 'production' for live deployed backend and frontend.
 export const ACTIVE_ENV = 'production'; // Options: 'development' | 'production'
 
 // ─── Environment Configurations ─────────────────────────────────────────────
 export const ENVIRONMENTS = {
   development: {
-    BACKEND_URL: 'https://web-guardian-seven.vercel.app',
-    WEBAPP_URL: 'https://web-guardian-jo5g.vercel.app'
+    BACKEND_URL,
+    WEBAPP_URL
   },
   production: {
-    BACKEND_URL: 'https://web-guardian-seven.vercel.app',
-    WEBAPP_URL: 'https://web-guardian-jo5g.vercel.app'
+    BACKEND_URL,
+    WEBAPP_URL
   }
 };
 

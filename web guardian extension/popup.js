@@ -761,7 +761,7 @@ async function directFetchAnalyze(url) {
       success: false,
       error: err.name === 'AbortError'
         ? 'Analysis timed out. Please try again.'
-        : 'WebGuard backend is unavailable.'
+        : 'WebGuard AI service is temporarily unavailable. Please try again.'
     };
   }
 }
@@ -966,11 +966,11 @@ function renderError(message) {
   showView(errorState);
   const isBackendDown = (message || '').toLowerCase().includes('backend') || (message || '').toLowerCase().includes('unavailable');
   if (errorTitle) {
-    errorTitle.textContent = isBackendDown ? 'Backend unavailable.' : 'Analysis Failed';
+    errorTitle.textContent = isBackendDown ? 'Service Unavailable' : 'Analysis Failed';
   }
   if (errorMsg) {
     errorMsg.textContent = isBackendDown
-      ? 'Start Backend with: cd backend && node server.js — or click Try Again.'
+      ? 'WebGuard AI service is temporarily unavailable. Please try again.'
       : (message || 'WebGuard could not complete the analysis.');
   }
 }
