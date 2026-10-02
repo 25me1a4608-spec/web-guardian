@@ -8,7 +8,7 @@
 
 // ─── Environment Selector ───────────────────────────────────────────────────
 // Change to 'production' once your backend and frontend are deployed.
-export const ACTIVE_ENV = 'development'; // Options: 'development' | 'production'
+export const ACTIVE_ENV = 'production'; // Options: 'development' | 'production'
 
 // ─── Environment Configurations ─────────────────────────────────────────────
 export const ENVIRONMENTS = {
@@ -21,7 +21,7 @@ export const ENVIRONMENTS = {
   production: {
     // REPLACE_AFTER_DEPLOYMENT: Replace with your actual deployed backend URL
     // Example: 'https://webguard-api.onrender.com' or 'https://api.yourdomain.com'
-    BACKEND_URL: 'https://YOUR-BACKEND-DOMAIN',
+    BACKEND_URL: 'https://web-guardian-seven.vercel.app',
 
     // REPLACE_AFTER_DEPLOYMENT: Replace with your actual deployed frontend URL
     // Example: 'https://webguard-ai.vercel.app' or 'https://yourdomain.com'
