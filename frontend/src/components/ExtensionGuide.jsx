@@ -1,19 +1,160 @@
 import React, { useState } from 'react';
 import {
-  Puzzle, ShieldCheck, ShieldAlert, AlertTriangle, Copy, Check,
-  Laptop, Layers, ArrowRight, X, Lock, ExternalLink, RefreshCw, Zap, Download
+  Puzzle,
+  Server,
+  Activity,
+  ShieldCheck,
+  Download,
+  ExternalLink,
+  Copy,
+  Check,
+  Laptop,
+  Globe,
+  ArrowDown,
+  Layers,
+  Lock,
+  Cpu,
+  Search,
+  CheckCircle2
 } from 'lucide-react';
 
-export default function ExtensionGuide({ isBackendOnline, onScanUrl }) {
-  const [copied, setCopied]               = useState(false);
-  const [showBlockDemo, setShowBlockDemo] = useState(false);
-  const extensionPath = 'D:\\Fake Website Detector\\code\\extension';
+const PRODUCTION_BACKEND_URL = 'https://web-guardian-seven.vercel.app';
+const PRODUCTION_FRONTEND_URL = 'https://web-guardian-jo5g.vercel.app';
+const EXTENSION_ZIP_PATH = '/web guardian extension.zip';
 
-  const handleCopyPath = () => {
-    navigator.clipboard.writeText(extensionPath);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+export default function ExtensionGuide({ isBackendOnline = true }) {
+  const [copiedStep2, setCopiedStep2] = useState(false);
+
+  const handleCopyChromeUrl = () => {
+    navigator.clipboard.writeText('chrome://extensions');
+    setCopiedStep2(true);
+    setTimeout(() => setCopiedStep2(false), 2000);
   };
+
+  const statusCards = [
+    {
+      title: 'WebGuard AI API',
+      status: 'Online',
+      statusClass: 'status-online',
+      desc: 'Connected to the WebGuard AI production security backend.',
+      icon: <Server size={20} className="status-icon" color="#16A34A" />
+    },
+    {
+      title: 'Chrome Extension',
+      status: 'Ready',
+      statusClass: 'status-ready',
+      desc: 'Lightweight browser protection that analyzes the current website.',
+      icon: <Puzzle size={20} className="status-icon" color="#0891B2" />
+    },
+    {
+      title: 'Real-Time URL Analysis',
+      status: 'Active',
+      statusClass: 'status-active',
+      desc: 'Send the current tab URL to the WebGuard AI security engine for analysis.',
+      icon: <Activity size={20} className="status-icon" color="#2563EB" />
+    },
+    {
+      title: 'Privacy Protection',
+      status: 'Protected',
+      statusClass: 'status-protected',
+      desc: 'Use the WebGuard AI security service without exposing sensitive page content unnecessarily.',
+      icon: <ShieldCheck size={20} className="status-icon" color="#059669" />
+    }
+  ];
+
+  const steps = [
+    {
+      number: 1,
+      title: 'Download Extension',
+      text: 'Download the WebGuard AI extension.',
+      action: (
+        <a
+          href={EXTENSION_ZIP_PATH}
+          download="web guardian extension.zip"
+          className="wg-btn wg-btn-primary wg-btn-sm"
+          style={{ marginTop: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+        >
+          <Download size={14} />
+          <span>Download .zip</span>
+        </a>
+      )
+    },
+    {
+      number: 2,
+      title: 'Open Extensions Page',
+      text: 'Open chrome://extensions in Google Chrome.',
+      action: (
+        <button
+          type="button"
+          onClick={handleCopyChromeUrl}
+          className="wg-copy-chip"
+          title="Click to copy chrome://extensions"
+        >
+          <code>chrome://extensions</code>
+          {copiedStep2 ? <Check size={12} color="#16A34A" /> : <Copy size={12} />}
+          <span>{copiedStep2 ? 'Copied!' : 'Copy'}</span>
+        </button>
+      )
+    },
+    {
+      number: 3,
+      title: 'Developer Mode',
+      text: 'Enable Developer mode.'
+    },
+    {
+      number: 4,
+      title: 'Load Unpacked',
+      text: 'Click Load unpacked and select the extracted WebGuard AI extension folder.'
+    },
+    {
+      number: 5,
+      title: 'Pin Toolbar Icon',
+      text: 'Pin WebGuard AI to your Chrome toolbar.'
+    },
+    {
+      number: 6,
+      title: 'Analyze Any Website',
+      text: 'Open any website and click the WebGuard AI extension to analyze the current tab.'
+    }
+  ];
+
+  const architectureFlow = [
+    {
+      title: 'Chrome Browser',
+      role: 'User Navigation & Active Tab',
+      icon: <Globe size={22} color="#0891B2" />
+    },
+    {
+      title: 'WebGuard AI Extension',
+      role: 'Inspects Hostname & URL Context',
+      icon: <Puzzle size={22} color="#0284C7" />
+    },
+    {
+      title: 'Current Website URL',
+      role: 'Extracted Clean Target Payload',
+      icon: <Laptop size={22} color="#4F46E5" />
+    },
+    {
+      title: 'WebGuard AI Production API',
+      role: 'Production Endpoint via Vercel',
+      icon: <Server size={22} color="#16A34A" />
+    },
+    {
+      title: 'Security Analysis',
+      role: '18 Lexical Heuristics + Threat Feeds',
+      icon: <Cpu size={22} color="#D97706" />
+    },
+    {
+      title: 'Risk Result',
+      role: 'Scored 0–100 Threat Verdict & Badges',
+      icon: <ShieldCheck size={22} color="#DC2626" />
+    },
+    {
+      title: 'WebGuard AI Extension',
+      role: 'Instant UI Display & Security Guidance',
+      icon: <CheckCircle2 size={22} color="#059669" />
+    }
+  ];
 
   return (
     <div className="wg-page-wrap">
@@ -23,190 +164,153 @@ export default function ExtensionGuide({ isBackendOnline, onScanUrl }) {
           <div className="wg-sub-hero-inner">
             <div className="wg-badge">
               <Puzzle size={14} color="#0891B2" />
-              <span>Chrome Extension (Manifest V3)</span>
+              <span>WebGuard AI Extension</span>
             </div>
-            <h1 className="wg-sub-hero-title">CyberAware Chrome Shield</h1>
+            <h1 className="wg-sub-hero-title">Install WebGuard AI</h1>
             <p className="wg-sub-hero-desc">
-              Real-time active tab monitoring. Automatically detects dangerous phishing links in your browser search & stops access before credentials can be stolen.
+              Protect your browsing with WebGuard AI — detect suspicious websites and phishing threats before your credentials or sensitive information can be exposed.
             </p>
+
+            {/* Action Buttons */}
+            <div className="wg-ext-hero-actions">
+              <a
+                href={EXTENSION_ZIP_PATH}
+                download="web guardian extension.zip"
+                className="wg-btn wg-btn-primary wg-btn-lg"
+                id="btn-download-extension"
+              >
+                <Download size={18} />
+                <span>Download WebGuard AI Extension</span>
+              </a>
+              <a
+                href={PRODUCTION_FRONTEND_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="wg-btn wg-btn-secondary wg-btn-lg"
+                id="btn-open-webguard"
+              >
+                <ExternalLink size={18} />
+                <span>Open WebGuard AI</span>
+              </a>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Main Extension Guide */}
+      {/* Status Cards Section */}
       <section className="wg-section">
         <div className="wrap">
-          {/* Status Row */}
-          <div className="wg-ext-status-card">
-            <div className="status-item">
-              <span className={`status-dot ${isBackendOnline ? 'online' : 'ready'}`} />
-              <span>{isBackendOnline ? 'ML Detection API: Online (Port 5000)' : 'Detection Engine: Active'}</span>
-            </div>
-            <div className="status-item">
-              <ShieldCheck size={16} color="#16A34A" />
-              <span>Manifest V3 Compliant</span>
-            </div>
-            <div className="status-item">
-              <Lock size={16} color="#0891B2" />
-              <span>Zero-Log Privacy Guard</span>
-            </div>
-
-            <button
-              type="button"
-              className="wg-btn wg-btn-primary wg-btn-sm"
-              onClick={() => setShowBlockDemo(true)}
-            >
-              <ShieldAlert size={14} />
-              <span>Test Interception Shield Screen</span>
-            </button>
-            <a
-              href="/web guardian extension.zip"
-              download
-              className="wg-btn wg-btn-primary wg-btn-sm"
-              style={{ backgroundColor: '#059669', borderColor: '#059669', color: 'white', display: 'flex', alignItems: 'center', gap: '8px' }}
-            >
-              <Download size={14} />
-              <span>Download Extension (.zip)</span>
-            </a>
+          <div className="wg-section-header">
+            <span className="wg-section-tag">SERVICE TELEMETRY</span>
+            <h2 className="wg-section-title">System Status &amp; Readiness</h2>
+            <p className="wg-section-sub">
+              Live operational verification across WebGuard AI security components.
+            </p>
           </div>
 
-          {/* Installation Steps */}
-          <div className="wg-section-header margin-top">
-            <span className="wg-section-tag">INSTALLATION GUIDE</span>
-            <h2 className="wg-section-title">Installing CyberAware Shield in Chrome</h2>
-            <p className="wg-section-sub">Follow these 5 simple steps to enable real-time phishing protection in Google Chrome.</p>
-          </div>
-
-          <div className="wg-ext-steps-grid">
-            <div className="ext-step-card">
-              <div className="step-num">1</div>
-              <h3>Download & Extract</h3>
-              <p>Download the <strong>web guardian extension.zip</strong> file using the button above and extract its contents to a folder on your computer.</p>
-            </div>
-
-            <div className="ext-step-card">
-              <div className="step-num">2</div>
-              <h3>Open Chrome Extensions</h3>
-              <p>Type <code>chrome://extensions</code> into your Chrome address bar or open <strong>Menu (⋮) &gt; Extensions &gt; Manage Extensions</strong>.</p>
-            </div>
-
-            <div className="ext-step-card">
-              <div className="step-num">3</div>
-              <h3>Enable Developer Mode</h3>
-              <p>Toggle the <strong>Developer mode</strong> switch in the upper right-hand corner of the Extensions page to <strong>ON</strong>.</p>
-            </div>
-
-            <div className="ext-step-card">
-              <div className="step-num">4</div>
-              <h3>Click "Load unpacked"</h3>
-              <p>Click <strong>Load unpacked</strong> and browse to the extracted folder. Select the root folder that contains the <code>manifest.json</code> file.</p>
-            </div>
-
-            <div className="ext-step-card">
-              <div className="step-num">5</div>
-              <h3>Pin & Auto-Protect</h3>
-              <p>Pin <strong>CyberAware Shield</strong> to your browser toolbar. As you search or browse, high-risk links are automatically blocked!</p>
-            </div>
+          <div className="wg-status-grid">
+            {statusCards.map((card, idx) => (
+              <div key={idx} className="wg-status-box-card">
+                <div className="status-box-header">
+                  <div className="status-box-icon-wrap">{card.icon}</div>
+                  <span className={`wg-status-pill ${card.statusClass}`}>
+                    <span className="status-pulse-dot" />
+                    {card.status}
+                  </span>
+                </div>
+                <h3 className="status-box-title">{card.title}</h3>
+                <p className="status-box-desc">{card.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Auto Detection & Interception Feature Showcase */}
+      {/* Installation Guide Section */}
       <section className="wg-section wg-bg-card">
         <div className="wrap">
           <div className="wg-section-header">
-            <span className="wg-section-tag">AUTOMATED INTERCEPTION</span>
-            <h2 className="wg-section-title">How Auto-Detection Stops Attackers</h2>
+            <span className="wg-section-tag">STEP-BY-STEP INSTRUCTIONS</span>
+            <h2 className="wg-section-title">Install WebGuard AI in Chrome</h2>
             <p className="wg-section-sub">
-              When a user navigates to or searches a high-risk URL, CyberAware Shield instantly interrupts the web request before the malicious page loads.
+              Follow these simple steps to activate real-time phishing protection in your Chrome browser.
             </p>
           </div>
 
-          <div className="wg-interception-showcase-grid">
-            <div className="showcase-card">
-              <div className="showcase-icon cyan">
-                <Laptop size={22} color="#0891B2" />
+          <div className="wg-steps-six-grid">
+            {steps.map((st) => (
+              <div key={st.number} className="wg-step-tile">
+                <div className="wg-step-tile-top">
+                  <div className="step-badge-number">Step {st.number}</div>
+                </div>
+                <h3 className="wg-step-tile-title">{st.title}</h3>
+                <p className="wg-step-tile-text">{st.text}</p>
+                {st.action && <div className="wg-step-tile-action">{st.action}</div>}
               </div>
-              <h3>1. Active Tab URL Monitoring</h3>
-              <p>Monitors background web navigation requests in real time using Chrome’s isolated declarativeNetRequest API.</p>
-            </div>
-
-            <div className="showcase-card">
-              <div className="showcase-icon warning">
-                <AlertTriangle size={22} color="#F59E0B" />
-              </div>
-              <h3>2. Instant AI Risk Evaluation</h3>
-              <p>Runs sub-50ms lexical heuristic scoring against domain age, SSL status, and brand spoofing signatures.</p>
-            </div>
-
-            <div className="showcase-card">
-              <div className="showcase-icon danger">
-                <ShieldAlert size={22} color="#DC2626" />
-              </div>
-              <h3>3. Automatic Interception Block</h3>
-              <p>Instantly replaces malicious page content with an enterprise red <strong>ACCESS BLOCKED</strong> warning screen to protect credentials.</p>
-            </div>
+            ))}
           </div>
 
-          <div className="wg-center-cta-wrap margin-top">
-            <button
-              type="button"
-              className="wg-btn wg-btn-primary wg-btn-lg"
-              onClick={() => setShowBlockDemo(true)}
-            >
-              <ShieldAlert size={18} />
-              <span>Preview Live Interception Block Screen</span>
-            </button>
+          {/* Quick Action Reminder */}
+          <div className="wg-install-cta-banner">
+            <div className="cta-banner-text">
+              <h3>Ready to secure your browsing experience?</h3>
+              <p>Download the official extension package and load unpacked in seconds.</p>
+            </div>
+            <div className="cta-banner-actions">
+              <a
+                href={EXTENSION_ZIP_PATH}
+                download="web guardian extension.zip"
+                className="wg-btn wg-btn-primary"
+              >
+                <Download size={16} />
+                <span>Download WebGuard AI Extension</span>
+              </a>
+              <a
+                href={PRODUCTION_FRONTEND_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="wg-btn wg-btn-outline"
+              >
+                <ExternalLink size={16} />
+                <span>Open WebGuard AI</span>
+              </a>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* INTERCEPTION SCREEN DEMO MODAL */}
-      {showBlockDemo && (
-        <div className="wg-modal-backdrop" onClick={() => setShowBlockDemo(false)}>
-          <div className="wg-interception-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="interception-banner">
-              <div className="interception-shield-icon">
-                <ShieldAlert size={48} color="#DC2626" />
-              </div>
-              <span className="interception-badge">CYBERAWARE AUTO-PROTECTION ACTIVE</span>
-              <h2 className="interception-title">ACCESS BLOCKED — MALICIOUS PHISHING DETECTED</h2>
-              <p className="interception-sub">
-                CyberAware Shield automatically intercepted your browser navigation request to prevent credential theft.
-              </p>
-            </div>
+      {/* Architecture Section */}
+      <section className="wg-section">
+        <div className="wrap">
+          <div className="wg-section-header">
+            <span className="wg-section-tag">ARCHITECTURE &amp; DATA FLOW</span>
+            <h2 className="wg-section-title">How WebGuard AI Works</h2>
+            <p className="wg-section-sub">
+              End-to-end telemetry pipeline from browser tab capture to security threat determination.
+            </p>
+          </div>
 
-            <div className="interception-body">
-              <div className="blocked-url-box">
-                <span className="lbl">Blocked Target Host:</span>
-                <code>http://verify-appleid-security-update.account-notice.net/login</code>
-              </div>
-
-              <div className="interception-reasons-grid">
-                <div className="reason-item">
-                  <strong>🚨 Brand Impersonation:</strong> Deceptive spoofing of Apple ID authentication portal.
+          <div className="wg-arch-flow-container">
+            {architectureFlow.map((node, i) => (
+              <React.Fragment key={i}>
+                <div className="wg-arch-flow-node">
+                  <div className="node-icon-bubble">{node.icon}</div>
+                  <div className="node-content">
+                    <span className="node-step-indicator">Stage {i + 1}</span>
+                    <h4 className="node-title">{node.title}</h4>
+                    <p className="node-role">{node.role}</p>
+                  </div>
                 </div>
-                <div className="reason-item">
-                  <strong>🚨 High Risk Score:</strong> Evaluated at 94/100 Threat Severity by AI detection.
-                </div>
-                <div className="reason-item">
-                  <strong>🚨 Disposable Domain:</strong> Host registered 2 days ago via suspicious TLD.
-                </div>
-              </div>
-            </div>
-
-            <div className="interception-footer">
-              <button
-                type="button"
-                className="wg-btn wg-btn-primary wg-btn-lg full-w"
-                onClick={() => setShowBlockDemo(false)}
-              >
-                <span>Return to Safety (Close Block Screen)</span>
-              </button>
-            </div>
+                {i < architectureFlow.length - 1 && (
+                  <div className="wg-arch-flow-arrow" aria-hidden="true">
+                    <ArrowDown size={22} className="flow-down-icon" />
+                  </div>
+                )}
+              </React.Fragment>
+            ))}
           </div>
         </div>
-      )}
+      </section>
     </div>
   );
 }

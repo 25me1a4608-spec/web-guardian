@@ -66,7 +66,7 @@ export default function ThreatIntelligencePage({ setActiveTab }) {
             </div>
             <h1 className="wg-sub-hero-title">Threat Intelligence</h1>
             <p className="wg-sub-hero-desc">
-              Explore global phishing trends, vector statistics, attacker TTPs (Tactics, Techniques, & Procedures), and intelligence feed reports curated by CyberAware analysts.
+              Explore global phishing trends, vector statistics, attacker TTPs (Tactics, Techniques, & Procedures), and intelligence feed reports curated by WebGuard AI analysts.
             </p>
           </div>
         </div>

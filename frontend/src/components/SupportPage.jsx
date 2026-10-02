@@ -48,7 +48,7 @@ export default function SupportPage({ setActiveTab }) {
           <div className="wg-sub-hero-inner">
             <div className="wg-badge">
               <LifeBuoy size={14} color="#0891B2" />
-              <span>CyberAware Help & Support Center</span>
+              <span>WebGuard AI Help & Support Center</span>
             </div>
             <h1 className="wg-sub-hero-title">Support & Threat Reporting</h1>
             <p className="wg-sub-hero-desc">
@@ -242,7 +242,7 @@ export default function SupportPage({ setActiveTab }) {
                     <textarea
                       id="fb-msg"
                       rows="4"
-                      placeholder="Share your thoughts on CyberAware Security tools, interface, or detection accuracy..."
+                      placeholder="Share your thoughts on WebGuard AI tools, interface, or detection accuracy..."
                       value={feedbackMsg}
                       onChange={(e) => setMsg(e.target.value)}
                       required

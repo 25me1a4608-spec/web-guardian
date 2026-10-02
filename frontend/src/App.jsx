@@ -225,7 +225,7 @@ export default function App() {
           <ResourcesPage setActiveTab={setActiveTab} />
         )}
 
-        {/* CHROME SHIELD EXTENSION PAGE */}
+        {/* WEBGUARD AI EXTENSION PAGE */}
         {activeTab === 'extension' && (
           <ExtensionGuide
             isBackendOnline={isBackendOnline}

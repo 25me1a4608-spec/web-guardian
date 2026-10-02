@@ -10,7 +10,7 @@ export default function Header({ activeTab, setActiveTab, isBackendOnline, isDem
     { id: 'academy', label: 'Cyber Academy' },
     { id: 'intelligence', label: 'Threat Intelligence' },
     { id: 'resources', label: 'Resources' },
-    { id: 'extension', label: 'Chrome Shield' },
+    { id: 'extension', label: 'Chrome Extension' },
     { id: 'support', label: 'Support' },
   ];
 
@@ -31,9 +31,9 @@ export default function Header({ activeTab, setActiveTab, isBackendOnline, isDem
             </div>
             <div className="wg-brand-text">
               <div className="wg-brand-title">
-                CyberAware <span className="wg-brand-subtitle-badge">SECURITY</span>
+                WebGuard <span className="wg-brand-subtitle-badge">AI</span>
               </div>
-              <div className="wg-brand-tagline">Protecting Users Through Cybersecurity Awareness</div>
+              <div className="wg-brand-tagline">Real-Time Phishing Detection & Explainable Security</div>
             </div>
           </div>
 
@@ -55,7 +55,7 @@ export default function Header({ activeTab, setActiveTab, isBackendOnline, isDem
           <div className="wg-header-actions">
             <div
               className={`wg-status-badge ${isBackendOnline ? 'online' : 'offline'}`}
-              title={isBackendOnline ? 'AI ML Detection Engine Online' : 'Local Detection Engine Active'}
+              title={isBackendOnline ? 'WebGuard AI API Online' : 'WebGuard AI Local Mode Ready'}
             >
               <span className="dot" />
               <span>{isBackendOnline ? 'Engine Online' : 'Engine Ready'}</span>

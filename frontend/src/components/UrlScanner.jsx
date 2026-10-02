@@ -240,7 +240,7 @@ export default function UrlScanner({
             <span className="wg-section-tag">CAPABILITIES</span>
             <h2 className="wg-section-title">Everything You Need To Detect Online Threats</h2>
             <p className="wg-section-sub">
-              CyberAware Security combines automated WHOIS data, SSL certificate validation, lexical algorithms, and risk telemetry in one platform.
+              WebGuard AI combines automated WHOIS data, SSL certificate validation, lexical algorithms, and risk telemetry in one platform.
             </p>
           </div>
 
@@ -296,7 +296,7 @@ export default function UrlScanner({
               </div>
               <h2>Built For Organizations, Universities & Security Teams</h2>
               <p>
-                CyberAware Security protects users across enterprise endpoints, academic networks, and personal devices with zero data retention.
+                WebGuard AI protects users across enterprise endpoints, academic networks, and personal devices with zero data retention.
               </p>
 
               <div className="checklist-items-grid">

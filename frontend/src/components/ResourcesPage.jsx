@@ -6,8 +6,8 @@ import {
 
 const FAQS = [
   {
-    question: 'How does CyberAware Security inspect suspicious URLs without risking infection?',
-    answer: 'CyberAware performs passive, non-executing server-side analysis. Our engine analyzes domain WHOIS records, SSL certificates, lexical patterns, typosquatting databases, and DNS configurations in an isolated sandbox environment so your device is never exposed.'
+    question: 'How does WebGuard AI inspect suspicious URLs without risking infection?',
+    answer: 'WebGuard AI performs passive, non-executing server-side analysis. Our engine analyzes domain WHOIS records, SSL certificates, lexical patterns, typosquatting databases, and DNS configurations in an isolated sandbox environment so your device is never exposed.'
   },
   {
     question: 'Why is an HTTPS padlock icon insufficient to determine if a website is genuine?',
@@ -18,8 +18,8 @@ const FAQS = [
     answer: 'Typosquatting involves registering domain names that closely mirror popular brand names with minor typos (e.g., swapping letters like "clouclflare.com" for "cloudflare.com"). Always inspect the host domain carefully from right to left.'
   },
   {
-    question: 'Can CyberAware Security integrate into our organization’s SIEM or browser extensions?',
-    answer: 'Yes! CyberAware provides RESTful API endpoints and lightweight browser extension manifests for Chrome, Firefox, and Edge to enforce real-time URL inspection at the endpoint level.'
+    question: 'Can WebGuard AI integrate into our organization’s SIEM or browser extensions?',
+    answer: 'Yes! WebGuard AI provides RESTful API endpoints and lightweight browser extension manifests for Chrome, Firefox, and Edge to enforce real-time URL inspection at the endpoint level.'
   },
   {
     question: 'What should I do if I accidentally entered credentials on a phishing website?',
@@ -137,7 +137,7 @@ export default function ResourcesPage({ setActiveTab }) {
               <button
                 type="button"
                 className="wg-btn wg-btn-primary wg-btn-lg"
-                onClick={() => alert('CyberAware Security Awareness Checklist PDF generated and ready for distribution.')}
+                onClick={() => alert('WebGuard AI Security Awareness Checklist PDF generated and ready for distribution.')}
               >
                 <Download size={18} />
                 <span>Download Printable PDF Checklist</span>

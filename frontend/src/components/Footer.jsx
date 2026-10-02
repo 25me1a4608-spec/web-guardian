@@ -13,8 +13,8 @@ export default function Footer({ setActiveTab, onOpenPrivacy }) {
                 <Shield size={20} color="#FFFFFF" strokeWidth={2.2} />
               </div>
               <div className="wg-brand-text">
-                <div className="wg-brand-title white">CyberAware <span className="wg-brand-subtitle-badge">SECURITY</span></div>
-                <div className="wg-brand-tagline muted">Protecting Users Through Cybersecurity Awareness</div>
+                <div className="wg-brand-title white">WebGuard <span className="wg-brand-subtitle-badge">AI</span></div>
+                <div className="wg-brand-tagline muted">Real-Time Phishing Detection & Explainable Security</div>
               </div>
             </div>
             <p className="wg-footer-mission">
@@ -64,7 +64,7 @@ export default function Footer({ setActiveTab, onOpenPrivacy }) {
         </div>
 
         <div className="wg-footer-bottom">
-          <p>© {new Date().getFullYear()} CyberAware Security Platform. Built for Enterprise, Academic & Public Cyber Defense.</p>
+          <p>© {new Date().getFullYear()} WebGuard AI Platform. Built for Enterprise, Academic & Public Cyber Defense.</p>
           <div className="wg-footer-legal">
             <button type="button" onClick={() => onOpenPrivacy()}>Privacy Policy</button>
             <span className="sep">•</span>

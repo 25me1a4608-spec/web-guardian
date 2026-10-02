@@ -167,7 +167,7 @@ export default function HowItWorks({ setActiveTab }) {
             <div className="core-engine-container">
               <div className="engine-banner">
                 <Server size={18} />
-                <span>WebGuard Backend — Port 5001</span>
+                <span>WebGuard Production Backend API</span>
                 <span className="engine-note">Strict Input Validation • Rate Limiter • Safe Logging</span>
               </div>
 
