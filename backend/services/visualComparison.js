@@ -17,6 +17,15 @@ import path from 'path';
 
 // ─── Recognized Brand Targets & Authentic Registry ───────────────────────────
 export const BRAND_TARGETS = {
+  flipkart: {
+    brand: 'flipkart',
+    name: 'Flipkart',
+    officialDomains: ['flipkart.com', 'flipkart.net'],
+    targetUrl: 'https://www.flipkart.com',
+    loginUrl: 'https://www.flipkart.com/account/login',
+    accentColor: '#2874f0',
+    keywords: ['flipkart', 'flipk4rt', 'flipkart-login', 'flipkart-order', 'flipkart-pay', 'flipkart-verify']
+  },
   paypal: {
     brand: 'paypal',
     name: 'PayPal',

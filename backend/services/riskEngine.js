@@ -180,9 +180,18 @@ const RULES = {
   BRAND_IMPERSONATION: {
     id: 'BRAND_IMPERSONATION',
     name: 'Brand Impersonation',
-    weight: 30,
+    weight: 45,
     severity: 'high',
-    description: 'URL appears to impersonate a well-known brand — a hallmark of phishing.'
+    description: 'URL appears to impersonate a well-known brand on an unauthorized domain — a hallmark of phishing.'
+  },
+
+  // ── Brand on Cloud Hosting ───────────────────────────────────────────────
+  BRAND_ON_CLOUD_HOST: {
+    id: 'BRAND_ON_CLOUD_HOST',
+    name: 'Brand Impersonation on Cloud Hosting',
+    weight: 35,
+    severity: 'high',
+    description: 'URL hosts an unauthorized brand clone on a third-party multi-tenant cloud/hosting platform.'
   },
 
   // ── Hyphen abuse ─────────────────────────────────────────────────────────
@@ -363,11 +372,20 @@ export function calculateRisk(features) {
 
   // ── Brand impersonation ───────────────────────────────────────────────────
   if (features.brandImpersonation) {
-    // Enrich the description with the specific brand
     const rule = { ...RULES.BRAND_IMPERSONATION };
-    rule.description = `URL appears to impersonate "${features.brandImpersonation}" — a hallmark of phishing.`;
+    const brandName = features.brandImpersonation.charAt(0).toUpperCase() + features.brandImpersonation.slice(1);
+    const legitDomain = features.officialBrandDomain ? ` Official domain is ${features.officialBrandDomain}.` : '';
+    rule.description = `URL appears to impersonate "${brandName}" on an unauthorized domain (${features.hostname}).${legitDomain}`;
     score += rule.weight;
     fired.push({ id: rule.id, name: rule.name, severity: rule.severity, description: rule.description });
+
+    // Cloud hosting platform abuse (e.g. Vercel, Netlify, Render, GitHub Pages)
+    if (features.cloudHostingWithBrand) {
+      const cloudRule = { ...RULES.BRAND_ON_CLOUD_HOST };
+      cloudRule.description = `URL deploys "${brandName}" brand keywords on third-party cloud hosting platform (${features.cloudHostingWithBrand}) — strong indicator of an unauthorized phishing clone.`;
+      score += cloudRule.weight;
+      fired.push({ id: cloudRule.id, name: cloudRule.name, severity: cloudRule.severity, description: cloudRule.description });
+    }
   }
 
   // ── Hyphen abuse ──────────────────────────────────────────────────────────
@@ -381,11 +399,15 @@ export function calculateRisk(features) {
 
   // ── Free tunnel / temporary hosting abuse ──────────────────────────────
   if (features.freeTunnelHost) {
-    // Enrich the description with the specific platform detected
     const rule = { ...RULES.FREE_TUNNEL_HOST };
     rule.description = `URL is hosted on "${features.freeTunnelHost}" — a free tunnel/hosting platform heavily abused for phishing. Exercise extreme caution.`;
     score += rule.weight;
     fired.push({ id: rule.id, name: rule.name, severity: rule.severity, description: rule.description });
+  }
+
+  // Enforce floor for brand impersonation: unauthorized brand mimicry can never be marked LOW / SAFE
+  if (features.brandImpersonation) {
+    score = Math.max(THRESHOLD.SUSPICIOUS, score);
   }
 
   // ── Clamp score to [0, 100] ───────────────────────────────────────────────

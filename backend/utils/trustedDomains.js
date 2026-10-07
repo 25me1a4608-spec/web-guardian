@@ -87,6 +87,13 @@ export const TRUSTED_OFFICIAL_DOMAINS = {
       'paypal.me'
     ]
   },
+  flipkart: {
+    brand: 'Flipkart',
+    domains: [
+      'flipkart.com',
+      'flipkart.net'
+    ]
+  },
   amazon: {
     brand: 'Amazon',
     domains: [

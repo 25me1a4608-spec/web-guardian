@@ -153,6 +153,7 @@ export function extractFeatures(rawUrl, parsed) {
 
   // ── 15. Brand look-alike detection ─────────────────────────────────────────
   const BRAND_MAP = {
+    flipkart:  ['flipkart.com', 'flipkart.net'],
     paypal:    ['paypal.com', 'paypal.me'],
     apple:     ['apple.com', 'icloud.com'],
     google:    ['google.com', 'gmail.com', 'google.co.in', 'google.co.uk', 'google.ca', 'google.de', 'google.fr', 'google.it', 'google.es', 'google.com.br', 'google.co.jp', 'youtube.com', 'googlemail.com'],
@@ -171,6 +172,7 @@ export function extractFeatures(rawUrl, parsed) {
   };
 
   let brandImpersonation = null;
+  let officialBrandDomain = null;
   if (!usesIpAddress && !isShortenedUrl && !isLocalDev && !isTrustedDomain) {
     for (const [brand, legitDomains] of Object.entries(BRAND_MAP)) {
       if (hostname.includes(brand)) {
@@ -179,13 +181,48 @@ export function extractFeatures(rawUrl, parsed) {
         );
         if (!isLegit) {
           brandImpersonation = brand;
+          officialBrandDomain = legitDomains[0];
           break;
         }
       }
     }
   }
 
-  // ── 16. Unusual URL / Path Structure ───────────────────────────────────────
+  // ── 16. Multi-tenant Cloud Hosting Abuse with Brand Impersonation ──────────
+  const CLOUD_HOSTING_PLATFORMS = new Set([
+    'vercel.app',
+    'netlify.app',
+    'web.app',
+    'firebaseapp.com',
+    'onrender.com',
+    'render.com',
+    'railway.app',
+    'github.io',
+    'gitlab.io',
+    'surge.sh',
+    'pages.dev',
+    'workers.dev',
+    'glitch.me',
+    'repl.co',
+    'replit.dev',
+    'trycloudflare.com',
+    'ngrok.io',
+    'ngrok-free.app',
+    'loca.lt',
+    'serveo.net'
+  ]);
+
+  let cloudHostingWithBrand = null;
+  if (brandImpersonation && !isLocalDev) {
+    for (const platform of CLOUD_HOSTING_PLATFORMS) {
+      if (hostname === platform || hostname.endsWith('.' + platform)) {
+        cloudHostingWithBrand = platform;
+        break;
+      }
+    }
+  }
+
+  // ── 17. Unusual URL / Path Structure ───────────────────────────────────────
   const authKeywords = ['login', 'verify', 'verification', 'account', 'signin', 'auth', 'confirm', 'update', 'password', 'secure', 'recover'];
   const pathSegments = pathname.toLowerCase().split('/').filter(Boolean);
   let sensitiveSegmentCount = 0;
@@ -199,7 +236,7 @@ export function extractFeatures(rawUrl, parsed) {
     (pathSegments.length >= 2 && /(login|signin|auth|recover)/i.test(pathname) && /(verify|account|confirm|update|secure|password)/i.test(pathname))
   );
 
-  // ── 17. Free Tunnel / Temporary Hosting Abuse ──────────────────────────────
+  // ── 18. Free Tunnel / Temporary Hosting Abuse ──────────────────────────────
   let freeTunnelHost = null;
   if (!isLocalDev) {
     for (const tunnelApex of FREE_TUNNEL_HOSTS) {
@@ -235,6 +272,8 @@ export function extractFeatures(rawUrl, parsed) {
     isHighRiskTld,
     hasDoubleSlashPath,
     brandImpersonation,  // string | null
+    officialBrandDomain, // string | null
+    cloudHostingWithBrand, // string | null e.g. 'vercel.app'
     unusualUrlStructure,
     freeTunnelHost,       // string | null — e.g. 'trycloudflare.com'
     // Domain Trust & Localhost attributes

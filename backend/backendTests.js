@@ -464,10 +464,46 @@ test('instagram-security.com lookalike NOT trusted & flagged as brand impersonat
   return f.isTrustedDomain === false && f.brandImpersonation === 'instagram' && r.score >= 30;
 });
 
+test('official flipkart.com domain verified as SAFE', () => {
+  const { f, r } = analyzeDirect('https://flipkart.com');
+  return f.isTrustedDomain === true && r.riskLevel === 'LOW' && r.score === 0;
+});
+
+test('official www.flipkart.com domain verified as SAFE', () => {
+  const { f, r } = analyzeDirect('https://www.flipkart.com');
+  return f.isTrustedDomain === true && r.riskLevel === 'LOW' && r.score === 0;
+});
+
+test('flipkart-rho-eight.vercel.app NOT trusted & flagged as brand impersonation / high risk', () => {
+  const { f, r } = analyzeDirect('https://flipkart-rho-eight.vercel.app/?ref=5869027018#');
+  return f.isTrustedDomain === false && f.brandImpersonation === 'flipkart' && r.score >= 70 && (r.riskLevel === 'HIGH' || r.riskLevel === 'SUSPICIOUS');
+});
+
+test('flipkart-login.vercel.app NOT trusted & flagged as brand impersonation', () => {
+  const { f, r } = analyzeDirect('https://flipkart-login.vercel.app');
+  return f.isTrustedDomain === false && f.brandImpersonation === 'flipkart' && r.score >= 70;
+});
+
+test('microsoft-login-example.com lookalike NOT trusted & flagged as brand impersonation', () => {
+  const { f, r } = analyzeDirect('https://microsoft-login-example.com');
+  return f.isTrustedDomain === false && f.brandImpersonation === 'microsoft' && r.score >= 31;
+});
+
+test('instagram-security-example.com lookalike NOT trusted & flagged as brand impersonation', () => {
+  const { f, r } = analyzeDirect('https://instagram-security-example.com');
+  return f.isTrustedDomain === false && f.brandImpersonation === 'instagram' && r.score >= 31;
+});
+
+test('localhost:5001 classified as LOCAL / DEVELOPMENT (SAFE)', () => {
+  const { f, r } = analyzeDirect('http://localhost:5001');
+  return f.isLocalDev === true && r.riskLevel === 'LOW' && r.score === 0;
+});
+
 // ════════════════════════════════════════════════════
 console.log('\n══════════════════════════════════════════════════════');
 console.log(`  RESULTS: ${pass} PASS / ${fail} FAIL / ${pass + fail} TOTAL`);
 console.log(`  STATUS: ${fail === 0 ? '✅ ALL TESTS PASSED' : `❌ ${fail} TESTS FAILED`}`);
 console.log('══════════════════════════════════════════════════════\n');
 process.exit(fail > 0 ? 1 : 0);
+
 

@@ -151,7 +151,17 @@ function buildKeyFindings(indicators, threatIntel, mlPrediction, features = {}) 
 
   const findings = [];
 
-  // TI first (highest credibility if available)
+  // Brand Impersonation Finding (Top Priority)
+  if (features.brandImpersonation) {
+    const brandName = features.brandImpersonation.charAt(0).toUpperCase() + features.brandImpersonation.slice(1);
+    const legitDomain = features.officialBrandDomain ? ` Official domain is ${features.officialBrandDomain}.` : '';
+    findings.push(`Domain '${features.hostname}' appears to impersonate '${brandName}' on an unauthorized domain.${legitDomain}`);
+    if (features.cloudHostingWithBrand) {
+      findings.push(`Hosted on third-party cloud platform (${features.cloudHostingWithBrand}) — strong indicator of an unauthorized clone.`);
+    }
+  }
+
+  // TI (high credibility if available)
   if (threatIntel?.available && (threatIntel.knownMalicious || threatIntel.suspicious)) {
     findings.push(threatIntel.message);
   }
@@ -160,7 +170,11 @@ function buildKeyFindings(indicators, threatIntel, mlPrediction, features = {}) 
   indicators
     .filter(i => i.severity === 'critical' || i.severity === 'high' || i.severity === 'medium')
     .slice(0, 4)
-    .forEach(i => findings.push(i.description || i.name));
+    .forEach(i => {
+      if (!findings.includes(i.description || i.name)) {
+        findings.push(i.description || i.name);
+      }
+    });
 
   // ML prediction finding
   if (mlPrediction?.available && mlPrediction.prediction !== 'LOW') {
