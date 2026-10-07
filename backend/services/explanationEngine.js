@@ -19,7 +19,18 @@ const RECOMMENDATIONS = {
 };
 
 // ─── Summary builder ─────────────────────────────────────────────────────────
-function buildSummary(score, riskLevel, indicators, threatIntel, mlPrediction) {
+function buildSummary(score, riskLevel, indicators, threatIntel, mlPrediction, features = {}) {
+  // Local development override
+  if (features.isLocalDev) {
+    return `This URL is a local development address (${features.hostname || 'localhost'}) and is classified as safe for local development and testing (risk score: ${score}/100).`;
+  }
+
+  // Verified legitimate domain override
+  if (features.isTrustedDomain) {
+    const brand = features.trustedBrand || features.trustedDomain || features.hostname;
+    return `This URL belongs to the verified official domain for ${brand} (${features.hostname}) and shows no security anomalies (risk score: ${score}/100).`;
+  }
+
   const hasTiMalicious  = threatIntel?.available  && threatIntel?.knownMalicious;
   const hasTiSuspicious = threatIntel?.available  && threatIntel?.suspicious && !hasTiMalicious;
   const hasMlHigh       = mlPrediction?.available && mlPrediction?.prediction === 'HIGH';
@@ -63,7 +74,16 @@ function buildSummary(score, riskLevel, indicators, threatIntel, mlPrediction) {
 }
 
 // ─── "Why this score" builder ─────────────────────────────────────────────────
-function buildWhyThisScore(score, indicators, threatIntel, mlPrediction, scoreBreakdown) {
+function buildWhyThisScore(score, indicators, threatIntel, mlPrediction, scoreBreakdown, features = {}) {
+  if (features.isLocalDev) {
+    return 'Local development address (localhost / loopback) — safe for local development and testing.';
+  }
+
+  if (features.isTrustedDomain) {
+    const brand = features.trustedBrand || features.trustedDomain || features.hostname;
+    return `Verified official domain for ${brand} (${features.hostname}) matching authentic registry.`;
+  }
+
   const parts = [];
 
   // Local analysis
@@ -112,7 +132,23 @@ function buildWhyThisScore(score, indicators, threatIntel, mlPrediction, scoreBr
 }
 
 // ─── Key findings builder ─────────────────────────────────────────────────────
-function buildKeyFindings(indicators, threatIntel, mlPrediction) {
+function buildKeyFindings(indicators, threatIntel, mlPrediction, features = {}) {
+  if (features.isLocalDev) {
+    return [
+      `Local development address detected (${features.hostname || 'localhost'}).`,
+      'Safe for local development and testing.'
+    ];
+  }
+
+  if (features.isTrustedDomain) {
+    const brand = features.trustedBrand || features.trustedDomain || features.hostname;
+    return [
+      `Verified legitimate domain: ${features.hostname}`,
+      `Matches authentic domain registry for ${brand}.`,
+      'No brand impersonation or malicious structural indicators detected.'
+    ];
+  }
+
   const findings = [];
 
   // TI first (highest credibility if available)
@@ -166,10 +202,18 @@ export function generateExplanation({
   features      = {},
   scoreBreakdown = null
 }) {
+  let recommendation = RECOMMENDATIONS[riskLevel] || RECOMMENDATIONS.LOW;
+  if (features.isLocalDev) {
+    recommendation = 'Local development address — safe for local testing.';
+  } else if (features.isTrustedDomain) {
+    recommendation = 'Verified legitimate domain — safe to visit.';
+  }
+
   return {
-    summary       : buildSummary(score, riskLevel, indicators, threatIntel, mlPrediction),
-    whyThisScore  : buildWhyThisScore(score, indicators, threatIntel, mlPrediction, scoreBreakdown),
-    keyFindings   : buildKeyFindings(indicators, threatIntel, mlPrediction),
-    recommendation: RECOMMENDATIONS[riskLevel] || RECOMMENDATIONS.LOW
+    summary       : buildSummary(score, riskLevel, indicators, threatIntel, mlPrediction, features),
+    whyThisScore  : buildWhyThisScore(score, indicators, threatIntel, mlPrediction, scoreBreakdown, features),
+    keyFindings   : buildKeyFindings(indicators, threatIntel, mlPrediction, features),
+    recommendation
   };
 }
+

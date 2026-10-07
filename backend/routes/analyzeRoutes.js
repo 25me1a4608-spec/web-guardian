@@ -177,14 +177,41 @@ router.post('/analyze', async (req, res) => {
     }
 
     // ── Stage 6: Hybrid score combination ─────────────────────────────────
-    const { finalScore, breakdown } = combineRiskSignals(
+    let { finalScore, breakdown } = combineRiskSignals(
       localRisk.score, threatIntel, mlPrediction
     );
 
+    // Override score if verified legitimate domain or local development address
+    let verdict = 'LOW RISK';
+    let trustStatus = 'UNVERIFIED';
+    let trustReason = null;
+
+    if (features.isLocalDev) {
+      finalScore = 0;
+      breakdown.localContribution = 0;
+      breakdown.tiContribution = 0;
+      breakdown.mlContribution = 0;
+      verdict = 'SAFE — LOCAL DEVELOPMENT';
+      trustStatus = 'LOCAL_DEVELOPMENT';
+      trustReason = 'Local development address';
+    } else if (features.isTrustedDomain && localRisk.score === 0 && !threatIntel?.knownMalicious) {
+      finalScore = 0;
+      breakdown.localContribution = 0;
+      breakdown.tiContribution = 0;
+      breakdown.mlContribution = 0;
+      verdict = 'SAFE';
+      trustStatus = 'VERIFIED_LEGITIMATE';
+      trustReason = 'Verified legitimate domain';
+    }
+
     let riskLevel, riskBadgeColor;
-    if      (finalScore >= 71) { riskLevel = 'HIGH';       riskBadgeColor = '#ef4444'; }
-    else if (finalScore >= 31) { riskLevel = 'SUSPICIOUS'; riskBadgeColor = '#f59e0b'; }
-    else                       { riskLevel = 'LOW';        riskBadgeColor = '#22c55e'; }
+    if      (finalScore >= 71) { riskLevel = 'HIGH';       riskBadgeColor = '#ef4444'; verdict = 'HIGH RISK'; }
+    else if (finalScore >= 31) { riskLevel = 'SUSPICIOUS'; riskBadgeColor = '#f59e0b'; verdict = 'SUSPICIOUS'; }
+    else                       {
+      riskLevel = 'LOW';
+      riskBadgeColor = '#22c55e';
+      if (!features.isLocalDev && !features.isTrustedDomain) verdict = 'LOW RISK';
+    }
 
     // ── Stage 7: Explanation ───────────────────────────────────────────────
     const explanation = generateExplanation({
@@ -211,6 +238,12 @@ router.post('/analyze', async (req, res) => {
       score          : finalScore,
       riskLevel,
       riskBadgeColor,
+      verdict,
+      trustStatus,
+      trustReason,
+      isLocalDevelopment: Boolean(features.isLocalDev),
+      isTrustedDomain: Boolean(features.isTrustedDomain),
+      trustedBrand   : features.trustedBrand || null,
 
       indicators     : localRisk.indicators,
       indicatorCount : localRisk.indicators.length,
@@ -230,7 +263,9 @@ router.post('/analyze', async (req, res) => {
         suspiciousPort        : features.suspiciousPort,
         hyphenCount           : features.hyphenCount,
         isHighRiskTld         : features.isHighRiskTld,
-        brandImpersonation    : features.brandImpersonation
+        brandImpersonation    : features.brandImpersonation,
+        isLocalDevelopment    : Boolean(features.isLocalDev),
+        isTrustedDomain       : Boolean(features.isTrustedDomain)
       },
 
       // Explanation
@@ -258,9 +293,8 @@ router.post('/analyze', async (req, res) => {
         available    : mlPrediction.available,
         modelType    : mlPrediction.modelType,
         modelLabel   : mlPrediction.modelLabel,
-        prediction   : mlPrediction.prediction,
+        prediction   : (features.isLocalDev || features.isTrustedDomain) ? 'LOW' : mlPrediction.prediction,
         confidence   : mlPrediction.confidence,
-        // confidenceScore intentionally NOT exposed — avoids misleading "87% probability" claims
         featureMap   : mlPrediction.featureMap,
         note         : mlPrediction.note
       },
@@ -284,7 +318,10 @@ router.post('/analyze', async (req, res) => {
         isShortenedUrl        : features.isShortenedUrl,
         urlLength             : features.urlLength,
         brandImpersonation    : features.brandImpersonation,
-        suspiciousKeywordsFound: features.suspiciousKeywords
+        suspiciousKeywordsFound: features.suspiciousKeywords,
+        isLocalDevelopment    : Boolean(features.isLocalDev),
+        isTrustedDomain       : Boolean(features.isTrustedDomain),
+        trustReason
       },
 
       analysisMode: threatIntel.available ? 'full' : 'local',

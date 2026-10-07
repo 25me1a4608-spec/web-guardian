@@ -367,9 +367,107 @@ test('explanation has whyThisScore string', () => {
   return typeof e.whyThisScore === 'string' || `whyThisScore: ${typeof e.whyThisScore}`;
 });
 
+// ═══════════════════════════════════════════════════
+// 6. TRUSTED DOMAINS & LOCAL DEVELOPMENT TESTS
+// ═══════════════════════════════════════════════════
+console.log('\n6. TRUSTED DOMAINS & LOCAL DEVELOPMENT\n');
+
+function analyzeDirect(rawUrl) {
+  const v = validateUrl(rawUrl);
+  const f = extractFeatures(v.url, v.parsed);
+  const r = calculateRisk(f);
+  return { v, f, r };
+}
+
+test('localhost HTTP URL classified as SAFE / LOW', () => {
+  const { f, r } = analyzeDirect('http://localhost:5173');
+  return f.isLocalDev === true && r.riskLevel === 'LOW' && r.score === 0;
+});
+
+test('127.0.0.1 loopback classified as SAFE / LOW', () => {
+  const { f, r } = analyzeDirect('http://127.0.0.1:3000/app');
+  return f.isLocalDev === true && r.riskLevel === 'LOW' && r.score === 0;
+});
+
+test('IPv6 ::1 loopback classified as SAFE / LOW', () => {
+  const { f, r } = analyzeDirect('http://[::1]:8080');
+  return f.isLocalDev === true && r.riskLevel === 'LOW' && r.score === 0;
+});
+
+test('official microsoft.com domain verified as SAFE', () => {
+  const { f, r } = analyzeDirect('https://microsoft.com');
+  return f.isTrustedDomain === true && r.riskLevel === 'LOW' && r.score === 0;
+});
+
+test('official www.microsoft.com domain verified as SAFE', () => {
+  const { f, r } = analyzeDirect('https://www.microsoft.com/en-us');
+  return f.isTrustedDomain === true && r.riskLevel === 'LOW' && r.score === 0;
+});
+
+test('official login.microsoftonline.com verified as SAFE', () => {
+  const { f, r } = analyzeDirect('https://login.microsoftonline.com/common/oauth2/authorize');
+  return f.isTrustedDomain === true && r.riskLevel === 'LOW' && r.score === 0;
+});
+
+test('official google.com domain verified as SAFE', () => {
+  const { f, r } = analyzeDirect('https://google.com');
+  return f.isTrustedDomain === true && r.riskLevel === 'LOW' && r.score === 0;
+});
+
+test('official mail.google.com domain verified as SAFE', () => {
+  const { f, r } = analyzeDirect('https://mail.google.com/mail/u/0/#inbox');
+  return f.isTrustedDomain === true && r.riskLevel === 'LOW' && r.score === 0;
+});
+
+test('official accounts.google.com domain verified as SAFE', () => {
+  const { f, r } = analyzeDirect('https://accounts.google.com/signin/v2/identifier');
+  return f.isTrustedDomain === true && r.riskLevel === 'LOW' && r.score === 0;
+});
+
+test('official whatsapp.com domain verified as SAFE', () => {
+  const { f, r } = analyzeDirect('https://whatsapp.com');
+  return f.isTrustedDomain === true && r.riskLevel === 'LOW' && r.score === 0;
+});
+
+test('official web.whatsapp.com domain verified as SAFE', () => {
+  const { f, r } = analyzeDirect('https://web.whatsapp.com');
+  return f.isTrustedDomain === true && r.riskLevel === 'LOW' && r.score === 0;
+});
+
+test('official instagram.com domain verified as SAFE', () => {
+  const { f, r } = analyzeDirect('https://instagram.com');
+  return f.isTrustedDomain === true && r.riskLevel === 'LOW' && r.score === 0;
+});
+
+test('official www.instagram.com domain verified as SAFE', () => {
+  const { f, r } = analyzeDirect('https://www.instagram.com/accounts/login/');
+  return f.isTrustedDomain === true && r.riskLevel === 'LOW' && r.score === 0;
+});
+
+test('microsoft-login.com lookalike NOT trusted & flagged as brand impersonation', () => {
+  const { f, r } = analyzeDirect('https://microsoft-login.com');
+  return f.isTrustedDomain === false && f.brandImpersonation === 'microsoft' && r.score >= 30;
+});
+
+test('google-security.com lookalike NOT trusted & flagged as brand impersonation', () => {
+  const { f, r } = analyzeDirect('https://google-security.com/verify');
+  return f.isTrustedDomain === false && f.brandImpersonation === 'google' && r.score >= 30;
+});
+
+test('whatsapp-verification.com lookalike NOT trusted & flagged as brand impersonation', () => {
+  const { f, r } = analyzeDirect('https://whatsapp-verification.com/login');
+  return f.isTrustedDomain === false && f.brandImpersonation === 'whatsapp' && r.score >= 30;
+});
+
+test('instagram-security.com lookalike NOT trusted & flagged as brand impersonation', () => {
+  const { f, r } = analyzeDirect('https://instagram-security.com/checkpoint');
+  return f.isTrustedDomain === false && f.brandImpersonation === 'instagram' && r.score >= 30;
+});
+
 // ════════════════════════════════════════════════════
 console.log('\n══════════════════════════════════════════════════════');
 console.log(`  RESULTS: ${pass} PASS / ${fail} FAIL / ${pass + fail} TOTAL`);
 console.log(`  STATUS: ${fail === 0 ? '✅ ALL TESTS PASSED' : `❌ ${fail} TESTS FAILED`}`);
 console.log('══════════════════════════════════════════════════════\n');
 process.exit(fail > 0 ? 1 : 0);
+

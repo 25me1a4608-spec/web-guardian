@@ -65,6 +65,8 @@ const SUSPICIOUS_PORTS = new Set([
 // ─── Regex: IPv4 ──────────────────────────────────────────────────────────────
 const IPV4_RE = /^(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)$/;
 
+import { checkDomainTrust, isLocalDevelopmentAddress } from '../utils/trustedDomains.js';
+
 /**
  * Extract all security-relevant features from a URL.
  *
@@ -79,11 +81,21 @@ export function extractFeatures(rawUrl, parsed) {
   const port       = parsed.port;    // empty string if not specified
   const protocol   = parsed.protocol;
 
+  // ── 0. Trusted Domain & Local Development Verification ─────────────────────
+  const trustCheck = checkDomainTrust(hostname);
+  const isLocalDev = trustCheck.isLocalDev;
+  const isTrustedDomain = trustCheck.isTrusted && !isLocalDev;
+  const trustReason = trustCheck.reason;
+  const trustedBrand = trustCheck.brand || null;
+  const trustedDomain = trustCheck.domain || null;
+
   // ── 1. HTTPS ────────────────────────────────────────────────────────────────
   const isHttps = protocol === 'https:';
 
   // ── 2. IP address as hostname ───────────────────────────────────────────────
-  const usesIpAddress = IPV4_RE.test(hostname);
+  // Local development loopback (127.0.0.1, ::1) is not flagged as a malicious raw IP attack
+  const rawIsIp = IPV4_RE.test(hostname);
+  const usesIpAddress = rawIsIp && !isLocalDev;
 
   // ── 3. Lengths ──────────────────────────────────────────────────────────────
   const urlLength      = rawUrl.length;
@@ -92,7 +104,7 @@ export function extractFeatures(rawUrl, parsed) {
   // ── 4. Subdomains ───────────────────────────────────────────────────────────
   // Strip the apex domain (last two labels) and count what remains.
   const labels = hostname.split('.').filter(Boolean);
-  const subdomainCount = usesIpAddress ? 0 : Math.max(0, labels.length - 2);
+  const subdomainCount = (rawIsIp || isLocalDev) ? 0 : Math.max(0, labels.length - 2);
 
   // ── 5. @ symbol in URL (credential-spoofing trick) ─────────────────────────
   const hasAtSymbol = rawUrl.includes('@');
@@ -105,17 +117,19 @@ export function extractFeatures(rawUrl, parsed) {
   const isShortenedUrl = SHORTENERS.has(hostname) || SHORTENERS.has(apexDomain);
 
   // ── 8. Suspicious keywords ──────────────────────────────────────────────────
+  // Exempt verified authentic domains and local dev from legitimate keyword matching
   const scanTarget = (hostname + pathname + search).toLowerCase();
-  const suspiciousKeywords = SUSPICIOUS_KEYWORDS.filter(kw => {
-    // Match keyword bounded by common delimiters so "banking" matches "bank"
-    // but avoids false positives inside random words.
-    const re = new RegExp(`(^|[-_./?&=#/])${kw}([-_./?&=#/]|$)`, 'i');
-    return re.test(scanTarget);
-  });
+  const suspiciousKeywords = (isTrustedDomain || isLocalDev)
+    ? []
+    : SUSPICIOUS_KEYWORDS.filter(kw => {
+        const re = new RegExp(`(^|[-_./?&=#/])${kw}([-_./?&=#/]|$)`, 'i');
+        return re.test(scanTarget);
+      });
 
   // ── 9. Suspicious port ──────────────────────────────────────────────────────
-  const portNum      = port ? parseInt(port, 10) : null;
-  const suspiciousPort = portNum !== null && SUSPICIOUS_PORTS.has(portNum);
+  const portNum = port ? parseInt(port, 10) : null;
+  // Localhost ports (3000, 5173, 8080, etc.) are standard for local development
+  const suspiciousPort = !isLocalDev && portNum !== null && SUSPICIOUS_PORTS.has(portNum);
 
   // ── 10. Special characters in path+query ───────────────────────────────────
   const specialCharCount = (pathname + search).replace(/[a-z0-9/_.?=&%-]/gi, '').length;
@@ -127,7 +141,7 @@ export function extractFeatures(rawUrl, parsed) {
   const hyphenCount = (hostname.match(/-/g) || []).length;
 
   // ── 13. Excessive hostname length (brand-baiting trick) ─────────────────────
-  const longHostname = hostnameLength > 30;
+  const longHostname = !isLocalDev && hostnameLength > 30;
 
   // ── 14. High-risk TLD ──────────────────────────────────────────────────────
   const HIGH_RISK_TLDS = new Set([
@@ -135,25 +149,29 @@ export function extractFeatures(rawUrl, parsed) {
     'club', 'work', 'click', 'icu', 'rest', 'link', 'monster', 'surf'
   ]);
   const tld            = labels[labels.length - 1] || '';
-  const isHighRiskTld  = HIGH_RISK_TLDS.has(tld);
+  const isHighRiskTld  = !isLocalDev && HIGH_RISK_TLDS.has(tld);
 
   // ── 15. Brand look-alike detection ─────────────────────────────────────────
   const BRAND_MAP = {
     paypal:    ['paypal.com', 'paypal.me'],
     apple:     ['apple.com', 'icloud.com'],
-    google:    ['google.com', 'gmail.com', 'google.co.in'],
-    microsoft: ['microsoft.com', 'live.com', 'office.com', 'outlook.com'],
-    amazon:    ['amazon.com', 'amazon.in', 'amazon.co.uk'],
+    google:    ['google.com', 'gmail.com', 'google.co.in', 'google.co.uk', 'google.ca', 'google.de', 'google.fr', 'google.it', 'google.es', 'google.com.br', 'google.co.jp', 'youtube.com', 'googlemail.com'],
+    gmail:     ['gmail.com', 'googlemail.com', 'google.com', 'mail.google.com'],
+    microsoft: ['microsoft.com', 'live.com', 'office.com', 'outlook.com', 'office365.com', 'microsoftonline.com', 'msn.com', 'azure.com', 'visualstudio.com', 'windows.com', 'bing.com'],
+    whatsapp:  ['whatsapp.com', 'whatsapp.net'],
+    instagram: ['instagram.com', 'cdninstagram.com'],
+    amazon:    ['amazon.com', 'amazon.in', 'amazon.co.uk', 'amazon.de', 'amazon.co.jp'],
     netflix:   ['netflix.com'],
-    facebook:  ['facebook.com', 'instagram.com', 'meta.com'],
+    facebook:  ['facebook.com', 'instagram.com', 'meta.com', 'fb.com', 'whatsapp.com', 'messenger.com'],
     chase:     ['chase.com'],
     wellsfargo:['wellsfargo.com'],
     binance:   ['binance.com'],
-    steam:     ['steampowered.com', 'steamcommunity.com']
+    steam:     ['steampowered.com', 'steamcommunity.com'],
+    github:    ['github.com', 'github.io']
   };
 
   let brandImpersonation = null;
-  if (!usesIpAddress && !isShortenedUrl) {
+  if (!usesIpAddress && !isShortenedUrl && !isLocalDev && !isTrustedDomain) {
     for (const [brand, legitDomains] of Object.entries(BRAND_MAP)) {
       if (hostname.includes(brand)) {
         const isLegit = legitDomains.some(
@@ -168,7 +186,6 @@ export function extractFeatures(rawUrl, parsed) {
   }
 
   // ── 16. Unusual URL / Path Structure ───────────────────────────────────────
-  // Detects nested/chained sensitive authentication and verification segments in the path
   const authKeywords = ['login', 'verify', 'verification', 'account', 'signin', 'auth', 'confirm', 'update', 'password', 'secure', 'recover'];
   const pathSegments = pathname.toLowerCase().split('/').filter(Boolean);
   let sensitiveSegmentCount = 0;
@@ -177,16 +194,19 @@ export function extractFeatures(rawUrl, parsed) {
       sensitiveSegmentCount++;
     }
   }
-  const unusualUrlStructure = sensitiveSegmentCount >= 2 || (pathSegments.length >= 2 && /(login|signin|auth|recover)/i.test(pathname) && /(verify|account|confirm|update|secure|password)/i.test(pathname));
+  const unusualUrlStructure = !isTrustedDomain && !isLocalDev && (
+    sensitiveSegmentCount >= 2 ||
+    (pathSegments.length >= 2 && /(login|signin|auth|recover)/i.test(pathname) && /(verify|account|confirm|update|secure|password)/i.test(pathname))
+  );
 
   // ── 17. Free Tunnel / Temporary Hosting Abuse ──────────────────────────────
-  // Checks if the hostname ends with any known free-tunnel/hosting apex domain.
-  // e.g. "disco-notification-maria-driven.trycloudflare.com" → freeTunnelHost = 'trycloudflare.com'
   let freeTunnelHost = null;
-  for (const tunnelApex of FREE_TUNNEL_HOSTS) {
-    if (hostname === tunnelApex || hostname.endsWith('.' + tunnelApex)) {
-      freeTunnelHost = tunnelApex;
-      break;
+  if (!isLocalDev) {
+    for (const tunnelApex of FREE_TUNNEL_HOSTS) {
+      if (hostname === tunnelApex || hostname.endsWith('.' + tunnelApex)) {
+        freeTunnelHost = tunnelApex;
+        break;
+      }
     }
   }
 
@@ -216,6 +236,12 @@ export function extractFeatures(rawUrl, parsed) {
     hasDoubleSlashPath,
     brandImpersonation,  // string | null
     unusualUrlStructure,
-    freeTunnelHost        // string | null — e.g. 'trycloudflare.com'
+    freeTunnelHost,       // string | null — e.g. 'trycloudflare.com'
+    // Domain Trust & Localhost attributes
+    isLocalDev,
+    isTrustedDomain,
+    trustReason,
+    trustedBrand,
+    trustedDomain
   };
 }

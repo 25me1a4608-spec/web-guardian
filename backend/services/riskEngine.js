@@ -42,6 +42,22 @@ const RULES = {
     description: 'URL uses HTTPS — connection is encrypted.'
   },
 
+  // ── Verified & Local Development ──────────────────────────────────────────
+  LOCAL_DEV: {
+    id: 'LOCAL_DEV',
+    name: 'Local Development Address',
+    weight: 0,
+    severity: 'low',
+    description: 'Local development address (localhost / loopback) — safe for local development.'
+  },
+  VERIFIED_DOMAIN: {
+    id: 'VERIFIED_DOMAIN',
+    name: 'Verified Legitimate Domain',
+    weight: 0,
+    severity: 'low',
+    description: 'Verified legitimate domain matching approved authentic registry.'
+  },
+
   // ── IP Address ─────────────────────────────────────────────────────────────
   IP_ADDRESS: {
     id: 'IP_ADDRESS',
@@ -241,6 +257,49 @@ const RECS = {
  * }}
  */
 export function calculateRisk(features) {
+  // ── 0. Local Development Handling ─────────────────────────────────────────
+  if (features.isLocalDev) {
+    return {
+      score: 0,
+      riskLevel: 'LOW',
+      riskBadgeColor: '#22c55e',
+      indicators: [
+        {
+          id: 'LOCAL_DEV',
+          name: 'Local Development Address',
+          severity: 'low',
+          description: 'Local development address (localhost / loopback) — safe for local development and testing.'
+        }
+      ],
+      recommendations: [
+        'Local development address — safe for local development and testing.',
+        'Keep local debugging configurations restricted to private environments.'
+      ]
+    };
+  }
+
+  // ── 0b. Verified Legitimate Official Domains ──────────────────────────────
+  // If an authentic official domain is verified and has no credential-spoofing attacks (like @ symbol or double-slash obfuscation)
+  if (features.isTrustedDomain && !features.hasAtSymbol && !features.hasDoubleSlashPath && !features.hasPunycode) {
+    return {
+      score: 0,
+      riskLevel: 'LOW',
+      riskBadgeColor: '#22c55e',
+      indicators: [
+        {
+          id: 'VERIFIED_DOMAIN',
+          name: 'Verified Legitimate Domain',
+          severity: 'low',
+          description: `Verified legitimate domain for ${features.trustedBrand || features.trustedDomain || features.hostname}.`
+        }
+      ],
+      recommendations: [
+        'Verified official domain — safe to visit.',
+        'Always ensure your browser shows a secure connection before submitting credentials.'
+      ]
+    };
+  }
+
   const fired = [];   // rules that matched
   let   score =  0;
 

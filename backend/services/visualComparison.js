@@ -28,8 +28,8 @@ export const BRAND_TARGETS = {
   },
   google: {
     brand: 'google',
-    name: 'Google',
-    officialDomains: ['google.com', 'accounts.google.com', 'gmail.com', 'google.co.in'],
+    name: 'Google / Gmail',
+    officialDomains: ['google.com', 'accounts.google.com', 'gmail.com', 'google.co.in', 'google.co.uk', 'google.ca', 'google.de', 'google.fr', 'google.it', 'google.es', 'google.com.br', 'google.co.jp', 'googlemail.com', 'youtube.com'],
     targetUrl: 'https://accounts.google.com',
     loginUrl: 'https://accounts.google.com/signin',
     accentColor: '#4285f4',
@@ -38,11 +38,29 @@ export const BRAND_TARGETS = {
   microsoft: {
     brand: 'microsoft',
     name: 'Microsoft',
-    officialDomains: ['microsoft.com', 'login.microsoftonline.com', 'live.com', 'office.com', 'outlook.com'],
+    officialDomains: ['microsoft.com', 'login.microsoftonline.com', 'microsoftonline.com', 'live.com', 'office.com', 'outlook.com', 'office365.com', 'azure.com', 'msn.com', 'windows.com', 'bing.com'],
     targetUrl: 'https://login.live.com',
     loginUrl: 'https://login.live.com',
     accentColor: '#00a4ef',
-    keywords: ['microsoft', 'micros0ft', 'outlook', 'office365', 'live-login', 'ms-account']
+    keywords: ['microsoft', 'micros0ft', 'outlook', 'office365', 'live-login', 'ms-account', 'microsoftonline']
+  },
+  whatsapp: {
+    brand: 'whatsapp',
+    name: 'WhatsApp',
+    officialDomains: ['whatsapp.com', 'whatsapp.net'],
+    targetUrl: 'https://web.whatsapp.com',
+    loginUrl: 'https://web.whatsapp.com',
+    accentColor: '#25d366',
+    keywords: ['whatsapp', 'whatsap', 'whats-app', 'whatsapp-web', 'whatsapp-verify', 'whatsapp-login']
+  },
+  instagram: {
+    brand: 'instagram',
+    name: 'Instagram',
+    officialDomains: ['instagram.com', 'cdninstagram.com'],
+    targetUrl: 'https://www.instagram.com/accounts/login/',
+    loginUrl: 'https://www.instagram.com/accounts/login/',
+    accentColor: '#e1306c',
+    keywords: ['instagram', 'instagr0m', 'insta-login', 'instagram-verify', 'instagram-security', 'ig-login']
   },
   netflix: {
     brand: 'netflix',
@@ -56,7 +74,7 @@ export const BRAND_TARGETS = {
   apple: {
     brand: 'apple',
     name: 'Apple',
-    officialDomains: ['apple.com', 'icloud.com'],
+    officialDomains: ['apple.com', 'icloud.com', 'me.com'],
     targetUrl: 'https://appleid.apple.com',
     loginUrl: 'https://appleid.apple.com',
     accentColor: '#555555',
@@ -74,11 +92,11 @@ export const BRAND_TARGETS = {
   facebook: {
     brand: 'facebook',
     name: 'Facebook / Meta',
-    officialDomains: ['facebook.com', 'meta.com', 'instagram.com'],
+    officialDomains: ['facebook.com', 'meta.com', 'fb.com'],
     targetUrl: 'https://www.facebook.com/login',
     loginUrl: 'https://www.facebook.com/login',
     accentColor: '#1877f2',
-    keywords: ['facebook', 'faceb00k', 'meta-login', 'instagram-verify', 'fb-security']
+    keywords: ['facebook', 'faceb00k', 'meta-login', 'fb-security']
   },
   chase: {
     brand: 'chase',
@@ -119,7 +137,7 @@ export const BRAND_TARGETS = {
   github: {
     brand: 'github',
     name: 'GitHub',
-    officialDomains: ['github.com'],
+    officialDomains: ['github.com', 'github.io'],
     targetUrl: 'https://github.com/login',
     loginUrl: 'https://github.com/login',
     accentColor: '#24292e',
