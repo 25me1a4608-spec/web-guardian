@@ -156,12 +156,17 @@ app.use((err, req, res, next) => {
 });
 
 // ── 11. Start Server ────────────────────────────────────────────────────────
-app.listen(PORT, HOST, () => {
-  console.log(`=======================================================`);
-  console.log(`  🛡️  WEGUARD AI DETECTION API — HARDENED (Step 13)`);
-  console.log(`  "Don't just detect the threat. Understand it."`);
-  console.log(`  Mode: ${IS_PRODUCTION ? 'PRODUCTION' : 'DEVELOPMENT'}`);
-  console.log(`  Rate Limit: ${process.env.RATE_LIMIT_MAX || 60} req / min`);
-  console.log(`  Server running on: http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`);
-  console.log(`=======================================================`);
-});
+if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
+  app.listen(PORT, HOST, () => {
+    console.log(`=======================================================`);
+    console.log(`  🛡️  WEGUARD AI DETECTION API — HARDENED (Step 13)`);
+    console.log(`  "Don't just detect the threat. Understand it."`);
+    console.log(`  Mode: ${IS_PRODUCTION ? 'PRODUCTION' : 'DEVELOPMENT'}`);
+    console.log(`  Rate Limit: ${process.env.RATE_LIMIT_MAX || 60} req / min`);
+    console.log(`  Server running on: http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`);
+    console.log(`=======================================================`);
+  });
+}
+
+export default app;
+

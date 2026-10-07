@@ -207,6 +207,86 @@ export function identifyBrand(rawUrl, hostname = '') {
 }
 
 /**
+ * Resolves browser launch options dynamically for both local environments (Windows/macOS/Linux)
+ * and serverless hosting environments (Vercel / AWS Lambda).
+ */
+export async function getBrowserLaunchConfig() {
+  const isServerless = Boolean(
+    process.env.VERCEL ||
+    process.env.AWS_LAMBDA_FUNCTION_VERSION ||
+    process.env.AWS_EXECUTION_ENV ||
+    (process.env.NODE_ENV === 'production' && !process.env.LOCAL_CHROME)
+  );
+
+  // 1. If explicit CHROME_PATH or PUPPETEER_EXECUTABLE_PATH is provided and exists
+  const explicitPath = process.env.CHROME_PATH || process.env.PUPPETEER_EXECUTABLE_PATH;
+  if (explicitPath && fs.existsSync(explicitPath)) {
+    return {
+      executablePath: explicitPath,
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--window-size=1280,800',
+        '--disable-web-security',
+        '--disable-features=IsolateOrigins,site-per-process'
+      ]
+    };
+  }
+
+  // 2. Serverless / Vercel environment: use @sparticuz/chromium-min
+  if (isServerless) {
+    try {
+      const chromiumModule = await import('@sparticuz/chromium-min');
+      const chromium = chromiumModule.default || chromiumModule;
+
+      const remotePackUrl = process.env.CHROMIUM_PACK_URL ||
+        'https://github.com/Sparticuz/chromium/releases/download/v131.0.1/chromium-v131.0.1-pack.tar';
+
+      const executablePath = await chromium.executablePath(remotePackUrl);
+
+      return {
+        executablePath,
+        headless: chromium.headless ?? true,
+        args: [
+          ...(chromium.args || []),
+          '--hide-scrollbars',
+          '--disable-web-security',
+          '--ignore-certificate-errors',
+          '--disable-features=IsolateOrigins,site-per-process',
+          '--window-size=1280,800'
+        ],
+        defaultViewport: { width: 1280, height: 800 }
+      };
+    } catch (serverlessErr) {
+      console.warn('[Puppeteer] Serverless chromium load failed, checking local executable:', serverlessErr.message);
+    }
+  }
+
+  // 3. Local Development (Windows, macOS, Linux desktop)
+  const localChromePath = getChromeExecutablePath();
+  if (localChromePath) {
+    return {
+      executablePath: localChromePath,
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--window-size=1280,800',
+        '--disable-web-security',
+        '--disable-features=IsolateOrigins,site-per-process'
+      ]
+    };
+  }
+
+  return null;
+}
+
+/**
  * Capture a screenshot of a target URL using Puppeteer
  *
  * @param {string} targetUrl
@@ -225,47 +305,51 @@ export async function captureWithPuppeteer(targetUrl, options = {}) {
     };
   }
 
-  const chromePath = getChromeExecutablePath();
-  if (!chromePath) {
-    console.warn('[Puppeteer] Chrome executable not found on system.');
+  const launchConfig = await getBrowserLaunchConfig();
+  if (!launchConfig || !launchConfig.executablePath) {
+    console.warn('[Puppeteer] Chromium executable not found on host or serverless runtime.');
     return {
-      screenshot: generateFallbackSVG(targetUrl, 'Chrome browser not located on host'),
+      screenshot: generateFallbackSVG(targetUrl, 'Chromium binary not available on host'),
       title: 'Browser Unavailable',
       success: false
     };
   }
 
   let browser = null;
+  let page = null;
   try {
     browser = await puppeteer.launch({
-      executablePath: chromePath,
-      headless: true,
-      args: [
+      executablePath: launchConfig.executablePath,
+      headless: launchConfig.headless ?? true,
+      args: launchConfig.args || [
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
         '--disable-gpu',
-        '--window-size=1280,800',
-        '--disable-web-security',
-        '--disable-features=IsolateOrigins,site-per-process'
+        '--window-size=1280,800'
       ],
+      defaultViewport: launchConfig.defaultViewport || { width: 1280, height: 800 },
+      ignoreHTTPSErrors: true,
       timeout: 15000
     });
 
-    const page = await browser.newPage();
+    page = await browser.newPage();
     await page.setViewport({ width: 1280, height: 800 });
     await page.setUserAgent(
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 WebGuard-Security-Audit/1.0'
     );
 
-    // Navigate with timeout
-    await page.goto(targetUrl, {
-      waitUntil: 'networkidle2',
-      timeout: 15000
-    }).catch(async () => {
-      // If networkidle2 times out, wait for domcontentloaded
-      await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 8000 }).catch(() => {});
-    });
+    // Navigate with timeout and handle redirects gracefully
+    try {
+      await page.goto(targetUrl, {
+        waitUntil: 'domcontentloaded',
+        timeout: 12000
+      });
+      // Brief settling pause to allow JavaScript-rendered DOMs/fonts to paint
+      await new Promise(resolve => setTimeout(resolve, 800));
+    } catch (navErr) {
+      console.warn(`[Puppeteer] Fast navigation fallback triggered for ${targetUrl}:`, navErr.message);
+    }
 
     const title = await page.title().catch(() => '');
 
@@ -337,14 +421,17 @@ export async function captureWithPuppeteer(targetUrl, options = {}) {
   } catch (err) {
     console.error(`[Puppeteer Capture Error for ${targetUrl}]:`, err.message);
     return {
-      screenshot: generateFallbackSVG(targetUrl, err.message),
-      title: 'Capture Error',
+      screenshot: generateFallbackSVG(targetUrl, 'Rendered via WebGuard Shield'),
+      title: 'Capture Fallback',
       loadTimeSec: null,
       pageUrls: [],
       formMeta: { hasPasswordField: false, hasUsernameField: false, formActions: [] },
       success: false
     };
   } finally {
+    if (page) {
+      await page.close().catch(() => {});
+    }
     if (browser) {
       await browser.close().catch(() => {});
     }
